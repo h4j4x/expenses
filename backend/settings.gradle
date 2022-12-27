@@ -1,0 +1,11 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        mavenLocal()
+    }
+}
+
+rootProject.name="expenses"
+
+include "api"

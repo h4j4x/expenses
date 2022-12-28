@@ -1,5 +1,6 @@
 package com.h4j4x.expenses.api.resource;
 
+import javax.annotation.security.PermitAll;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -10,6 +11,7 @@ public class GreetingResource {
     public static final String HELLO_MESSAGE = "Hello from Expenses API";
 
     @GET
+    @PermitAll
     @Produces(MediaType.TEXT_PLAIN)
     public String hello() {
         return HELLO_MESSAGE;

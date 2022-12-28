@@ -10,7 +10,7 @@ public class GreetingResourceTests {
     @Test
     public void whenGetHelloThen_ReturnsHelloMessage() {
         given()
-            .when().get("/hello")
+            .when().get("hello")
             .then()
             .statusCode(200)
             .body(is(GreetingResource.HELLO_MESSAGE));

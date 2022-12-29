@@ -5,6 +5,7 @@ import com.h4j4x.expenses.api.model.Auth;
 import com.h4j4x.expenses.api.model.UserDTO;
 import com.h4j4x.expenses.api.service.UserService;
 import io.quarkus.security.Authenticated;
+import io.quarkus.security.AuthenticationFailedException;
 import io.smallrye.jwt.build.Jwt;
 import io.smallrye.mutiny.Uni;
 import java.time.Duration;
@@ -39,13 +40,13 @@ public class UserResource {
     public Uni<String> signIn(Auth auth) {
         return userService
             .findUserByEmailAndPassword(auth.getEmail(), auth.getPassword())
-            .onItem().transform(this::createToken);
+            .onItem().ifNotNull().transform(this::createToken)
+            .onItem().ifNull().failWith(new AuthenticationFailedException("Invalid credentials"));
     }
 
     private String createToken(UserEntity userEntity) {
         return Jwt.issuer(jwtIssuer)
             .upn(userEntity.getEmail())
-            .groups("user") // todo: from data
             .expiresIn(Duration.ofDays(tokenExpirationInDays))
             .sign();
     }

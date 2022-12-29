@@ -19,7 +19,7 @@ public class UserService {
 
     public Uni<UserEntity> findUserByEmailAndPassword(String email, String password) {
         return userRepo.findByEmail(email)
-            .onItem().transform(userEntity -> {
+            .onItem().ifNotNull().transform(userEntity -> {
                 // todo: password hasher
                 if (password.equals(userEntity.getPassword())) {
                     return userEntity;

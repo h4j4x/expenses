@@ -33,14 +33,9 @@ public class AuthMechanism implements HttpAuthenticationMechanism {
     @Override
     public Uni<SecurityIdentity> authenticate(RoutingContext context, IdentityProviderManager identityProviderManager) {
         return delegate.authenticate(context, identityProviderManager)
-            .onItem().transformToUni(identity -> {
-                if (identity != null) {
-                    return userService
-                        .findUserByEmail(identity.getPrincipal().getName())
-                        .onItem().transform(userEntity -> createSecurityIdentity(userEntity, identity));
-                }
-                return Uni.createFrom().nothing();
-            });
+            .onItem().ifNotNull().transformToUni(identity -> userService
+                .findUserByEmail(identity.getPrincipal().getName())
+                .onItem().ifNotNull().transform(userEntity -> createSecurityIdentity(userEntity, identity)));
     }
 
     private SecurityIdentity createSecurityIdentity(UserEntity userEntity, SecurityIdentity identity) {

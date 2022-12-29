@@ -8,7 +8,7 @@ import static org.hamcrest.CoreMatchers.is;
 @QuarkusTest
 public class GreetingResourceTests {
     @Test
-    public void whenGetHelloThen_ReturnsHelloMessage() {
+    public void whenGetHello_Then_ShouldGetHelloMessage() {
         given()
             .when().get("hello")
             .then()

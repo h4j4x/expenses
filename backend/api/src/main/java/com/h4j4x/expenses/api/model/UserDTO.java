@@ -2,7 +2,7 @@ package com.h4j4x.expenses.api.model;
 
 import java.security.Principal;
 
-public class User implements Principal {
+public class UserDTO implements Principal {
     private String name;
 
     private String email;

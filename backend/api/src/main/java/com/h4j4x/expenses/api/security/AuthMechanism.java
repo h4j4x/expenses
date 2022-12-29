@@ -1,6 +1,8 @@
 package com.h4j4x.expenses.api.security;
 
-import com.h4j4x.expenses.api.model.User;
+import com.h4j4x.expenses.api.domain.UserEntity;
+import com.h4j4x.expenses.api.model.UserDTO;
+import com.h4j4x.expenses.api.service.UserService;
 import io.quarkus.arc.Priority;
 import io.quarkus.security.identity.IdentityProviderManager;
 import io.quarkus.security.identity.SecurityIdentity;
@@ -21,29 +23,37 @@ import javax.enterprise.inject.Alternative;
 @Priority(1)
 public class AuthMechanism implements HttpAuthenticationMechanism {
     private final JWTAuthMechanism delegate;
+    private final UserService userService;
 
-    public AuthMechanism(JWTAuthMechanism delegate) {
+    public AuthMechanism(JWTAuthMechanism delegate, UserService userService) {
         this.delegate = delegate;
+        this.userService = userService;
     }
 
     @Override
     public Uni<SecurityIdentity> authenticate(RoutingContext context, IdentityProviderManager identityProviderManager) {
         return delegate.authenticate(context, identityProviderManager)
-            .onItem().transform(identity -> {
-                if (identity == null) {
-                    return null;
+            .onItem().transformToUni(identity -> {
+                if (identity != null) {
+                    return userService
+                        .findUserByEmail(identity.getPrincipal().getName())
+                        .onItem().transform(userEntity -> createSecurityIdentity(userEntity, identity));
                 }
-                var principal = new User();
-                principal.setName("todo"); // todo: from data
-                principal.setEmail(identity.getPrincipal().getName()); // todo: from data
-                return QuarkusSecurityIdentity.builder()
-                    .setPrincipal(principal)
-                    .addAttributes(identity.getAttributes())
-                    .addCredentials(identity.getCredentials())
-                    .addRoles(identity.getRoles())
-                    .setAnonymous(identity.isAnonymous())
-                    .build();
+                return Uni.createFrom().nothing();
             });
+    }
+
+    private SecurityIdentity createSecurityIdentity(UserEntity userEntity, SecurityIdentity identity) {
+        var principal = new UserDTO();
+        principal.setName(userEntity.getName());
+        principal.setEmail(userEntity.getEmail()); // todo: mapper
+        return QuarkusSecurityIdentity.builder()
+            .setPrincipal(principal)
+            .addAttributes(identity.getAttributes())
+            .addCredentials(identity.getCredentials())
+            .addRoles(identity.getRoles())
+            .setAnonymous(identity.isAnonymous())
+            .build();
     }
 
     @Override

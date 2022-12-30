@@ -6,6 +6,6 @@ pluginManagement {
     }
 }
 
-rootProject.name="expenses"
+rootProject.name = "expenses"
 
 include "api"

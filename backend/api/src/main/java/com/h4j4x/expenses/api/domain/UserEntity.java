@@ -4,6 +4,7 @@ import java.security.Principal;
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
 @Entity
 @Table(name = "users")
@@ -23,6 +24,10 @@ public class UserEntity implements Principal {
     @NotBlank(message = "User password may not be blank")
     @Column(nullable = false)
     private String password;
+
+    @Size(max = 100)
+    @Column(length = 100)
+    private String salt;
 
     public UserEntity() {
     }
@@ -64,5 +69,13 @@ public class UserEntity implements Principal {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getSalt() {
+        return salt;
+    }
+
+    public void setSalt(String salt) {
+        this.salt = salt;
     }
 }

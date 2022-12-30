@@ -4,13 +4,13 @@ import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.UserCredentials;
 import com.h4j4x.expenses.api.model.UserDTO;
 import com.h4j4x.expenses.api.repository.UserRepository;
+import com.h4j4x.expenses.api.security.impl.DummyStringHasher;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import java.time.Duration;
 import java.util.Optional;
-import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,8 +23,7 @@ public class UserServiceTests {
     private static final String TEST_EMAIL = "test@mail.com";
     private static final String TEST_PASSWORD = "12345678";
 
-    @Inject
-    UserService userService;
+    private UserService userService;
 
     @InjectMock
     UserRepository userRepo;
@@ -36,6 +35,7 @@ public class UserServiceTests {
         Mockito
             .when(userRepo.findByEmail(TEST_EMAIL))
             .thenReturn(Uni.createFrom().item(user));
+        userService = new UserService(userRepo, new DummyStringHasher());
     }
 
     @Test

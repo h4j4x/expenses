@@ -8,6 +8,7 @@ import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.smallrye.mutiny.Uni;
 import javax.ws.rs.BadRequestException;
 import org.apache.http.HttpStatus;
@@ -45,7 +46,7 @@ public class UserResourceTests {
             .when(userService.createUser(TEST_NAME, TEST_EMAIL, TEST_PASSWORD))
             .thenThrow(new BadRequestException(UserService.USER_EMAIL_EXISTS_MESSAGE));
         RestAssured.given()
-            .headers("Content-Type", "application/json")
+            .contentType(ContentType.JSON)
             .when().body(user).post(UserResource.SIGN_UP)
             .then()
             .statusCode(HttpStatus.SC_BAD_REQUEST);
@@ -63,7 +64,7 @@ public class UserResourceTests {
             .when(userService.createUser(TEST_NAME, user.getEmail(), TEST_PASSWORD))
             .thenReturn(Uni.createFrom().item(userEntity));
         RestAssured.given()
-            .headers("Content-Type", "application/json")
+            .contentType(ContentType.JSON)
             .when().body(user).post(UserResource.SIGN_UP)
             .then()
             .statusCode(HttpStatus.SC_CREATED)
@@ -77,7 +78,7 @@ public class UserResourceTests {
     public void whenPostSignIn_WithCorrectCredentials_Then_ShouldGetJwtToken() {
         var credentials = new UserCredentials(TEST_EMAIL, TEST_PASSWORD);
         RestAssured.given()
-            .headers("Content-Type", "application/json")
+            .contentType(ContentType.JSON)
             .when().body(credentials).post(UserResource.SIGN_IN)
             .then()
             .statusCode(HttpStatus.SC_OK)
@@ -91,7 +92,7 @@ public class UserResourceTests {
     public void whenPostSignIn_WithInvalidCredentials_Then_ShouldThrow401() {
         var credentials = new UserCredentials(TEST_EMAIL, TEST_PASSWORD + "-");
         RestAssured.given()
-            .headers("Content-Type", "application/json")
+            .contentType(ContentType.JSON)
             .when().body(credentials).post(UserResource.SIGN_IN)
             .then()
             .statusCode(HttpStatus.SC_UNAUTHORIZED);
@@ -114,7 +115,7 @@ public class UserResourceTests {
     public void whenGetMe_Authenticated_Then_ShouldGetUserData() {
         var credentials = new UserCredentials(TEST_EMAIL, TEST_PASSWORD);
         var token = RestAssured.given()
-            .headers("Content-Type", "application/json")
+            .contentType(ContentType.JSON)
             .when().body(credentials).post(UserResource.SIGN_IN).body();
         var authToken = token.asString();
 

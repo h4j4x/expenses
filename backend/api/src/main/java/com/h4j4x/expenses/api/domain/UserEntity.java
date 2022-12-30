@@ -1,6 +1,8 @@
 package com.h4j4x.expenses.api.domain;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "users")
@@ -9,12 +11,15 @@ public class UserEntity {
     @GeneratedValue
     private Long id;
 
+    @NotBlank(message = "User name may not be blank")
     @Column(nullable = false)
     private String name;
 
+    @Email(message = "User email must be valid")
     @Column(nullable = false, unique = true)
     private String email;
 
+    @NotBlank(message = "User password may not be blank")
     @Column(nullable = false)
     private String password;
 

@@ -25,7 +25,7 @@ public class UserService {
     private Uni<UserEntity> createUserEntity(String name, String email, String password) {
         // todo: password hasher
         var userEntity = new UserEntity(name, email, password);
-        return userRepo.persist(userEntity);
+        return userRepo.save(userEntity);
     }
 
     public Uni<UserEntity> findUserByEmail(String email) {

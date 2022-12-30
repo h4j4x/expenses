@@ -3,6 +3,7 @@ package com.h4j4x.expenses.api.resource;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.UserCredentials;
 import com.h4j4x.expenses.api.model.UserDTO;
+import com.h4j4x.expenses.api.model.UserToken;
 import com.h4j4x.expenses.api.service.UserService;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
@@ -35,7 +36,7 @@ public class UserResourceTests {
             .when(userService.findUserByEmail(TEST_EMAIL))
             .thenReturn(Uni.createFrom().item(user));
         Mockito
-            .when(userService.findUserByEmailAndPassword(TEST_EMAIL, TEST_PASSWORD))
+            .when(userService.findUserByEmailAndPassword(new UserCredentials(TEST_EMAIL, TEST_PASSWORD)))
             .thenReturn(Uni.createFrom().item(user));
     }
 
@@ -43,7 +44,7 @@ public class UserResourceTests {
     public void whenPostSignUp_WithTestUserEmail_Then_ShouldThrow400() {
         var user = new UserDTO(TEST_NAME, TEST_EMAIL, TEST_PASSWORD);
         Mockito
-            .when(userService.createUser(TEST_NAME, TEST_EMAIL, TEST_PASSWORD))
+            .when(userService.createUser(user))
             .thenThrow(new BadRequestException(UserService.USER_EMAIL_EXISTS_MESSAGE));
         RestAssured.given()
             .contentType(ContentType.JSON)
@@ -51,7 +52,7 @@ public class UserResourceTests {
             .then()
             .statusCode(HttpStatus.SC_BAD_REQUEST);
 
-        Mockito.verify(userService).createUser(TEST_NAME, TEST_EMAIL, TEST_PASSWORD);
+        Mockito.verify(userService).createUser(user);
         Mockito.verifyNoMoreInteractions(userService);
     }
 
@@ -61,7 +62,7 @@ public class UserResourceTests {
         var userEntity = new UserEntity(user.getName(), user.getEmail(), user.getPassword());
         userEntity.setId(2L);
         Mockito
-            .when(userService.createUser(TEST_NAME, user.getEmail(), TEST_PASSWORD))
+            .when(userService.createUser(user))
             .thenReturn(Uni.createFrom().item(userEntity));
         RestAssured.given()
             .contentType(ContentType.JSON)
@@ -70,7 +71,7 @@ public class UserResourceTests {
             .statusCode(HttpStatus.SC_CREATED)
             .body(not(blankOrNullString()));
 
-        Mockito.verify(userService).createUser(TEST_NAME, user.getEmail(), TEST_PASSWORD);
+        Mockito.verify(userService).createUser(user);
         Mockito.verifyNoMoreInteractions(userService);
     }
 
@@ -84,7 +85,7 @@ public class UserResourceTests {
             .statusCode(HttpStatus.SC_OK)
             .body(not(blankOrNullString()));
 
-        Mockito.verify(userService).findUserByEmailAndPassword(TEST_EMAIL, TEST_PASSWORD);
+        Mockito.verify(userService).findUserByEmailAndPassword(credentials);
         Mockito.verifyNoMoreInteractions(userService);
     }
 
@@ -97,7 +98,7 @@ public class UserResourceTests {
             .then()
             .statusCode(HttpStatus.SC_UNAUTHORIZED);
 
-        Mockito.verify(userService).findUserByEmailAndPassword(TEST_EMAIL, TEST_PASSWORD + "-");
+        Mockito.verify(userService).findUserByEmailAndPassword(credentials);
         Mockito.verifyNoMoreInteractions(userService);
     }
 
@@ -116,17 +117,17 @@ public class UserResourceTests {
         var credentials = new UserCredentials(TEST_EMAIL, TEST_PASSWORD);
         var token = RestAssured.given()
             .contentType(ContentType.JSON)
-            .when().body(credentials).post(UserResource.SIGN_IN).body();
-        var authToken = token.asString();
+            .when().body(credentials).post(UserResource.SIGN_IN)
+            .then().extract().as(UserToken.class);
 
         RestAssured.given()
-            .headers("Authorization", "Bearer " + authToken)
+            .headers("Authorization", "Bearer " + token.token())
             .when().get(UserResource.ME)
             .then()
             .statusCode(HttpStatus.SC_OK)
             .body("email", is(TEST_EMAIL));
 
-        Mockito.verify(userService).findUserByEmailAndPassword(TEST_EMAIL, TEST_PASSWORD);
+        Mockito.verify(userService).findUserByEmailAndPassword(credentials);
         Mockito.verify(userService).findUserByEmail(TEST_EMAIL);
         Mockito.verifyNoMoreInteractions(userService);
     }

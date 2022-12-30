@@ -3,6 +3,7 @@ package com.h4j4x.expenses.api.resource;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.UserCredentials;
 import com.h4j4x.expenses.api.model.UserDTO;
+import com.h4j4x.expenses.api.model.UserToken;
 import com.h4j4x.expenses.api.service.UserService;
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.AuthenticationFailedException;
@@ -13,12 +14,15 @@ import javax.annotation.security.PermitAll;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.reactive.ResponseStatus;
 
 @Path("/users")
+@Produces(MediaType.APPLICATION_JSON)
 public class UserResource {
     static final String SIGN_UP = "sign-up";
     static final String SIGN_IN = "sign-in";
@@ -40,33 +44,37 @@ public class UserResource {
     @ResponseStatus(201)
     @PermitAll
     @Path("/" + SIGN_UP)
-    public Uni<String> signUp(UserDTO userData) {
+    public Uni<UserToken> signUp(UserDTO userDTO) {
         return userService
-            .createUser(userData.getName(), userData.getEmail(), userData.getPassword())
+            .createUser(userDTO)
             .onItem().ifNotNull().transform(this::createToken);
     }
 
     @POST
     @PermitAll
     @Path("/" + SIGN_IN)
-    public Uni<String> signIn(UserCredentials userCredentials) {
+    public Uni<UserToken> signIn(UserCredentials userCredentials) {
         return userService
-            .findUserByEmailAndPassword(userCredentials.getEmail(), userCredentials.getPassword())
+            .findUserByEmailAndPassword(userCredentials)
             .onItem().ifNotNull().transform(this::createToken)
             .onItem().ifNull().failWith(new AuthenticationFailedException("Invalid credentials"));
     }
 
-    private String createToken(UserEntity userEntity) {
-        return Jwt.issuer(jwtIssuer)
+    private UserToken createToken(UserEntity userEntity) {
+        var expiresIn = Duration.ofDays(tokenExpirationInDays);
+        var token = Jwt.issuer(jwtIssuer)
             .upn(userEntity.getEmail())
-            .expiresIn(Duration.ofDays(tokenExpirationInDays))
+            .expiresIn(expiresIn)
             .sign();
+        return new UserToken(token, expiresIn.toHours());
     }
 
     @GET
     @Authenticated
     @Path("/" + ME)
     public Uni<UserDTO> me(@Context SecurityContext securityContext) {
-        return Uni.createFrom().item((UserDTO) securityContext.getUserPrincipal());
+        var userEntity = (UserEntity) securityContext.getUserPrincipal();
+        return Uni.createFrom()
+            .item(UserDTO.fromEntity(userEntity));
     }
 }

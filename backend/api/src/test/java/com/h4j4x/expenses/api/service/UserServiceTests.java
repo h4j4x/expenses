@@ -1,6 +1,8 @@
 package com.h4j4x.expenses.api.service;
 
 import com.h4j4x.expenses.api.domain.UserEntity;
+import com.h4j4x.expenses.api.model.UserCredentials;
+import com.h4j4x.expenses.api.model.UserDTO;
 import com.h4j4x.expenses.api.repository.UserRepository;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
@@ -38,7 +40,7 @@ public class UserServiceTests {
 
     @Test
     void whenCreateUser_WithTestUserEmail_Then_ShouldThrowBadRequest() {
-        var uni = userService.createUser("TEST", TEST_EMAIL, TEST_PASSWORD);
+        var uni = userService.createUser(new UserDTO("TEST", TEST_EMAIL, TEST_PASSWORD));
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
@@ -60,7 +62,7 @@ public class UserServiceTests {
             .when(userRepo.save(any(UserEntity.class)))
             .thenReturn(Uni.createFrom().item(user));
 
-        var uni = userService.createUser("TEST", user.getEmail(), TEST_PASSWORD);
+        var uni = userService.createUser(new UserDTO("TEST", "other-" + TEST_EMAIL, TEST_PASSWORD));
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
@@ -93,7 +95,7 @@ public class UserServiceTests {
 
     @Test
     void whenFindUserByEmailAndPassword_WithCorrectPassword_ThenShouldGetTestUser() {
-        var uni = userService.findUserByEmailAndPassword(TEST_EMAIL, TEST_PASSWORD);
+        var uni = userService.findUserByEmailAndPassword(new UserCredentials(TEST_EMAIL, TEST_PASSWORD));
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
@@ -109,7 +111,7 @@ public class UserServiceTests {
 
     @Test
     void whenFindUserByEmailAndPassword_WithIncorrectPassword_ThenShouldGetNothing() {
-        var uni = userService.findUserByEmailAndPassword(TEST_EMAIL, TEST_PASSWORD + "-");
+        var uni = userService.findUserByEmailAndPassword(new UserCredentials(TEST_EMAIL, TEST_PASSWORD + "-"));
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 

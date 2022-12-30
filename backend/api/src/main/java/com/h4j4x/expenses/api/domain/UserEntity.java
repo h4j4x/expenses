@@ -1,12 +1,13 @@
 package com.h4j4x.expenses.api.domain;
 
+import java.security.Principal;
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "users")
-public class UserEntity {
+public class UserEntity implements Principal {
     @Id
     @GeneratedValue
     private Long id;
@@ -40,6 +41,7 @@ public class UserEntity {
         this.id = id;
     }
 
+    @Override
     public String getName() {
         return name;
     }

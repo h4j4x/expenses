@@ -1,6 +1,8 @@
 package com.h4j4x.expenses.api.service;
 
 import com.h4j4x.expenses.api.domain.UserEntity;
+import com.h4j4x.expenses.api.model.UserCredentials;
+import com.h4j4x.expenses.api.model.UserDTO;
 import com.h4j4x.expenses.api.repository.UserRepository;
 import io.smallrye.mutiny.Uni;
 import javax.enterprise.context.ApplicationScoped;
@@ -16,15 +18,15 @@ public class UserService {
         this.userRepo = userRepo;
     }
 
-    public Uni<UserEntity> createUser(String name, String email, String password) {
-        return userRepo.findByEmail(email)
+    public Uni<UserEntity> createUser(UserDTO user) {
+        return userRepo.findByEmail(user.getEmail())
             .onItem().ifNotNull().failWith(new BadRequestException(USER_EMAIL_EXISTS_MESSAGE))
-            .onItem().ifNull().switchTo(() -> createUserEntity(name, email, password));
+            .onItem().ifNull().switchTo(() -> createUserEntity(user));
     }
 
-    private Uni<UserEntity> createUserEntity(String name, String email, String password) {
+    private Uni<UserEntity> createUserEntity(UserDTO userDTO) {
         // todo: password hasher
-        var userEntity = new UserEntity(name, email, password);
+        var userEntity = new UserEntity(userDTO.getName(), userDTO.getEmail(), userDTO.getPassword());
         return userRepo.save(userEntity);
     }
 
@@ -32,11 +34,11 @@ public class UserService {
         return userRepo.findByEmail(email);
     }
 
-    public Uni<UserEntity> findUserByEmailAndPassword(String email, String password) {
-        return userRepo.findByEmail(email)
+    public Uni<UserEntity> findUserByEmailAndPassword(UserCredentials credentials) {
+        return userRepo.findByEmail(credentials.getEmail())
             .onItem().ifNotNull().transform(userEntity -> {
                 // todo: password hasher
-                if (password.equals(userEntity.getPassword())) {
+                if (credentials.getPassword().equals(userEntity.getPassword())) {
                     return userEntity;
                 }
                 return null;

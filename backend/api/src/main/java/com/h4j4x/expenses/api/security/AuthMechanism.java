@@ -1,7 +1,6 @@
 package com.h4j4x.expenses.api.security;
 
 import com.h4j4x.expenses.api.domain.UserEntity;
-import com.h4j4x.expenses.api.model.UserDTO;
 import com.h4j4x.expenses.api.service.UserService;
 import io.quarkus.arc.Priority;
 import io.quarkus.security.identity.IdentityProviderManager;
@@ -39,11 +38,8 @@ public class AuthMechanism implements HttpAuthenticationMechanism {
     }
 
     private SecurityIdentity createSecurityIdentity(UserEntity userEntity, SecurityIdentity identity) {
-        var principal = new UserDTO();
-        principal.setName(userEntity.getName());
-        principal.setEmail(userEntity.getEmail()); // todo: mapper
         return QuarkusSecurityIdentity.builder()
-            .setPrincipal(principal)
+            .setPrincipal(userEntity)
             .addAttributes(identity.getAttributes())
             .addCredentials(identity.getCredentials())
             .addRoles(identity.getRoles())

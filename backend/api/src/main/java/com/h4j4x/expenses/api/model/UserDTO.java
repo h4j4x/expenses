@@ -2,10 +2,16 @@ package com.h4j4x.expenses.api.model;
 
 import java.security.Principal;
 
-public class UserDTO implements Principal {
+public class UserDTO extends UserCredentials implements Principal {
     private String name;
 
-    private String email;
+    public UserDTO() {
+    }
+
+    public UserDTO(String name, String email, String password) {
+        super(email, password);
+        this.name = name;
+    }
 
     @Override
     public String getName() {
@@ -14,13 +20,5 @@ public class UserDTO implements Principal {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 }

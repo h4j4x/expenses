@@ -1,7 +1,7 @@
 package com.h4j4x.expenses.api.resource;
 
 import com.h4j4x.expenses.api.domain.UserEntity;
-import com.h4j4x.expenses.api.model.Auth;
+import com.h4j4x.expenses.api.model.UserCredentials;
 import com.h4j4x.expenses.api.model.UserDTO;
 import com.h4j4x.expenses.api.service.UserService;
 import io.quarkus.security.Authenticated;
@@ -16,9 +16,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.resteasy.reactive.ResponseStatus;
 
 @Path("/users")
 public class UserResource {
+    static final String SIGN_UP = "sign-up";
     static final String SIGN_IN = "sign-in";
     static final String ME = "me";
 
@@ -35,11 +37,21 @@ public class UserResource {
     }
 
     @POST
+    @ResponseStatus(201)
+    @PermitAll
+    @Path("/" + SIGN_UP)
+    public Uni<String> signUp(UserDTO userData) {
+        return userService
+            .createUser(userData.getName(), userData.getEmail(), userData.getPassword())
+            .onItem().ifNotNull().transform(this::createToken);
+    }
+
+    @POST
     @PermitAll
     @Path("/" + SIGN_IN)
-    public Uni<String> signIn(Auth auth) {
+    public Uni<String> signIn(UserCredentials userCredentials) {
         return userService
-            .findUserByEmailAndPassword(auth.getEmail(), auth.getPassword())
+            .findUserByEmailAndPassword(userCredentials.getEmail(), userCredentials.getPassword())
             .onItem().ifNotNull().transform(this::createToken)
             .onItem().ifNull().failWith(new AuthenticationFailedException("Invalid credentials"));
     }

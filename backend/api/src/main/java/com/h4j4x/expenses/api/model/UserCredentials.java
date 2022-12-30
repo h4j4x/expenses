@@ -1,10 +1,10 @@
 package com.h4j4x.expenses.api.model;
 
-public class Auth {
-    public Auth() {
+public class UserCredentials {
+    public UserCredentials() {
     }
 
-    public Auth(String email, String password) {
+    public UserCredentials(String email, String password) {
         this.email = email;
         this.password = password;
     }

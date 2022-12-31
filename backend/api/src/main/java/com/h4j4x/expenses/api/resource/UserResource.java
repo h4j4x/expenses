@@ -5,6 +5,7 @@ import com.h4j4x.expenses.api.model.UserCredentials;
 import com.h4j4x.expenses.api.model.UserDTO;
 import com.h4j4x.expenses.api.model.UserToken;
 import com.h4j4x.expenses.api.service.UserService;
+import io.quarkus.hibernate.reactive.panache.common.runtime.ReactiveTransactional;
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.AuthenticationFailedException;
 import io.smallrye.jwt.build.Jwt;
@@ -23,6 +24,7 @@ import org.jboss.resteasy.reactive.ResponseStatus;
 
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON)
+@ReactiveTransactional
 public class UserResource {
     static final String SIGN_UP = "sign-up";
     static final String SIGN_IN = "sign-in";

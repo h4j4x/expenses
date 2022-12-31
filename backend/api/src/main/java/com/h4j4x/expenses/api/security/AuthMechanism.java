@@ -15,8 +15,10 @@ import io.smallrye.mutiny.Uni;
 import io.vertx.ext.web.RoutingContext;
 import java.util.Set;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.control.ActivateRequestContext;
 import javax.enterprise.inject.Alternative;
 
+@ActivateRequestContext
 @Alternative
 @ApplicationScoped
 @Priority(1)

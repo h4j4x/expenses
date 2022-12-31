@@ -49,7 +49,7 @@ public class UserService {
 
     public Uni<UserEntity> findUserByEmailAndPassword(UserCredentials credentials) {
         return userRepo.findByEmail(credentials.getEmail())
-            .onItem().transform(Unchecked.function(userEntity -> {
+            .onItem().ifNotNull().transform(Unchecked.function(userEntity -> {
                 if (stringHasher.match(credentials.getPassword(), userEntity.getSalt(), userEntity.getPassword())) {
                     return userEntity;
                 }

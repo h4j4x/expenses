@@ -19,8 +19,8 @@ import org.mockito.Mockito;
 import static org.hamcrest.Matchers.*;
 
 @QuarkusTest
-@TestHTTPEndpoint(UserResource.class)
-public class UserResourceTests {
+@TestHTTPEndpoint(AuthResource.class)
+public class AuthResourceTests {
     private static final String TEST_NAME = "test";
     private static final String TEST_EMAIL = "test@mail.com";
     private static final String TEST_PASSWORD = "12345678";
@@ -48,7 +48,7 @@ public class UserResourceTests {
             .thenThrow(new BadRequestException(UserService.USER_EMAIL_EXISTS_MESSAGE));
         RestAssured.given()
             .contentType(ContentType.JSON)
-            .when().body(user).post(UserResource.SIGN_UP)
+            .when().body(user).post(AuthResource.SIGN_UP)
             .then()
             .statusCode(HttpStatus.SC_BAD_REQUEST);
 
@@ -66,7 +66,7 @@ public class UserResourceTests {
             .thenReturn(Uni.createFrom().item(userEntity));
         RestAssured.given()
             .contentType(ContentType.JSON)
-            .when().body(user).post(UserResource.SIGN_UP)
+            .when().body(user).post(AuthResource.SIGN_UP)
             .then()
             .statusCode(HttpStatus.SC_CREATED)
             .body(not(blankOrNullString()));
@@ -80,7 +80,7 @@ public class UserResourceTests {
         var credentials = new UserCredentials(TEST_EMAIL, TEST_PASSWORD);
         RestAssured.given()
             .contentType(ContentType.JSON)
-            .when().body(credentials).post(UserResource.SIGN_IN)
+            .when().body(credentials).post(AuthResource.SIGN_IN)
             .then()
             .statusCode(HttpStatus.SC_OK)
             .body(not(blankOrNullString()));
@@ -94,7 +94,7 @@ public class UserResourceTests {
         var credentials = new UserCredentials(TEST_EMAIL, TEST_PASSWORD + "-");
         RestAssured.given()
             .contentType(ContentType.JSON)
-            .when().body(credentials).post(UserResource.SIGN_IN)
+            .when().body(credentials).post(AuthResource.SIGN_IN)
             .then()
             .statusCode(HttpStatus.SC_UNAUTHORIZED);
 
@@ -105,7 +105,7 @@ public class UserResourceTests {
     @Test
     public void whenGetMe_Anonymous_Then_ShouldThrow401() {
         RestAssured.given()
-            .when().get(UserResource.ME)
+            .when().get(AuthResource.ME)
             .then()
             .statusCode(HttpStatus.SC_UNAUTHORIZED);
 
@@ -117,12 +117,12 @@ public class UserResourceTests {
         var credentials = new UserCredentials(TEST_EMAIL, TEST_PASSWORD);
         var token = RestAssured.given()
             .contentType(ContentType.JSON)
-            .when().body(credentials).post(UserResource.SIGN_IN)
+            .when().body(credentials).post(AuthResource.SIGN_IN)
             .then().extract().as(UserToken.class);
 
         RestAssured.given()
             .headers("Authorization", "Bearer " + token.token())
-            .when().get(UserResource.ME)
+            .when().get(AuthResource.ME)
             .then()
             .statusCode(HttpStatus.SC_OK)
             .body("email", is(TEST_EMAIL));

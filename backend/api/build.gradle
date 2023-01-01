@@ -11,6 +11,7 @@ dependencies {
     implementation "io.quarkus:quarkus-hibernate-validator"
     implementation "io.quarkus:quarkus-resteasy-reactive"
     implementation "io.quarkus:quarkus-resteasy-reactive-jackson"
+    implementation "io.quarkus:quarkus-smallrye-graphql"
     implementation "io.quarkus:quarkus-smallrye-jwt"
     implementation "io.quarkus:quarkus-smallrye-jwt-build"
 

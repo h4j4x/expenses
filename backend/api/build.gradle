@@ -15,10 +15,11 @@ dependencies {
     implementation "io.quarkus:quarkus-smallrye-jwt"
     implementation "io.quarkus:quarkus-smallrye-jwt-build"
 
-    implementation "io.quarkus:quarkus-reactive-pg-client"
+    runtimeOnly "io.quarkus:quarkus-reactive-pg-client"
 
     testImplementation "io.quarkus:quarkus-junit5"
     testImplementation "io.quarkus:quarkus-junit5-mockito"
+    testImplementation "io.quarkus:quarkus-smallrye-graphql-client"
     testImplementation "io.rest-assured:rest-assured"
 }
 

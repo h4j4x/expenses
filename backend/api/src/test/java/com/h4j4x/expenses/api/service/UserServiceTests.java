@@ -123,4 +123,28 @@ public class UserServiceTests {
         Mockito.verify(userRepo).findByEmail(TEST_EMAIL);
         Mockito.verifyNoMoreInteractions(userRepo);
     }
+
+    @Test
+    void whenEditUser_WithoutPassword_Then_ShouldEditUserEntityAndKeepPassword() {
+        var user = new UserEntity("TEST", "other-" + TEST_EMAIL, TEST_PASSWORD);
+        var edited = new UserEntity(user.getName(), "another-" + TEST_EMAIL, TEST_PASSWORD);
+        Mockito
+            .when(userRepo.save(any(UserEntity.class)))
+            .thenReturn(Uni.createFrom().item(edited));
+
+        var uni = userService.editUser(user, new UserDTO(user.getName(), edited.getEmail(), null));
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var userEntity = subscriber
+            .awaitItem(Duration.ofMillis(100))
+            .getItem();
+        assertNotNull(userEntity);
+        assertEquals(edited.getName(), userEntity.getName());
+        assertEquals(edited.getEmail(), userEntity.getEmail());
+        assertEquals(edited.getPassword(), userEntity.getPassword());
+
+        Mockito.verify(userRepo).save(any(UserEntity.class));
+        Mockito.verifyNoMoreInteractions(userRepo);
+    }
 }

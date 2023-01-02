@@ -5,15 +5,17 @@ import io.quarkus.hibernate.reactive.panache.PanacheRepository;
 import io.smallrye.mutiny.Uni;
 import java.util.Set;
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
 
 @ApplicationScoped
 public class UserRepository implements PanacheRepository<UserEntity> {
-    @Inject
-    Validator validator;
+    private final Validator validator;
+
+    public UserRepository(Validator validator) {
+        this.validator = validator;
+    }
 
     public Uni<UserEntity> save(UserEntity userEntity) {
         return Uni.createFrom().<UserEntity>emitter(emitter -> {

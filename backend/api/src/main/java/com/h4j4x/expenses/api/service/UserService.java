@@ -29,14 +29,14 @@ public class UserService {
             .onItem().ifNull().switchTo(() -> createUserEntity(user));
     }
 
-    private Uni<UserEntity> createUserEntity(UserDTO userDTO) {
+    private Uni<UserEntity> createUserEntity(UserDTO user) {
         return Uni.createFrom().<UserEntity>emitter(emitter -> {
             try {
                 var salt = stringHasher.salt();
-                var password = stringHasher.hash(userDTO.getPassword(), salt);
-                var userEntity = new UserEntity(userDTO.getName(), userDTO.getEmail(), password);
-                userEntity.setSalt(salt);
-                emitter.complete(userEntity);
+                var password = stringHasher.hash(user.getPassword(), salt);
+                var entity = new UserEntity(user.getName(), user.getEmail(), password);
+                entity.setSalt(salt);
+                emitter.complete(entity);
             } catch (GeneralSecurityException e) {
                 emitter.fail(e);
             }
@@ -55,5 +55,20 @@ public class UserService {
                 }
                 return null;
             }));
+    }
+
+    public Uni<UserEntity> editUser(UserEntity entity, UserDTO user) {
+        return Uni.createFrom().<UserEntity>emitter(emitter -> {
+            try {
+                entity.setName(user.getName());
+                entity.setEmail(user.getEmail());
+                if (user.getPassword() != null) {
+                    entity.setPassword(stringHasher.hash(user.getPassword(), entity.getSalt()));
+                }
+                emitter.complete(entity);
+            } catch (GeneralSecurityException e) {
+                emitter.fail(e);
+            }
+        }).flatMap(userRepo::save);
     }
 }

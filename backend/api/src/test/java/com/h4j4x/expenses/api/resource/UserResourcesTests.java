@@ -1,5 +1,6 @@
 package com.h4j4x.expenses.api.resource;
 
+import com.h4j4x.expenses.api.client.UserResourceClient;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.UserDTO;
 import com.h4j4x.expenses.api.service.UserService;
@@ -15,6 +16,7 @@ import io.smallrye.graphql.client.Response;
 import io.smallrye.graphql.client.core.Document;
 import io.smallrye.graphql.client.dynamic.api.DynamicGraphQLClient;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -42,6 +44,9 @@ public class UserResourcesTests {
     @Inject
     @GraphQLClient("graphql")
     DynamicGraphQLClient graphQLClient;
+
+    @Inject
+    UserResourceClient userClient;
 
     private UserEntity userEntity() {
         var user = new UserEntity(TEST_NAME, TEST_EMAIL, TEST_PASSWORD);
@@ -94,12 +99,7 @@ public class UserResourcesTests {
 
     @Test
     public void whenQueryUser_Authenticated_Then_ShouldGetUserData() throws ExecutionException, InterruptedException {
-        UserEntity userEntity = userEntity();
-        userEntity.setName(TEST_EMAIL);
-        QuarkusSecurityIdentity identity = QuarkusSecurityIdentity.builder().setPrincipal(userEntity).build();
-        Mockito
-            .when(jwtAuth.authenticate(Mockito.any(), Mockito.any()))
-            .thenReturn(Uni.createFrom().item(identity));
+        authenticateUser();
 
         Document query = document(
             operation(
@@ -118,5 +118,36 @@ public class UserResourcesTests {
 
         Mockito.verify(userService).findUserByEmail(TEST_EMAIL);
         Mockito.verifyNoMoreInteractions(userService);
+    }
+
+    @Test
+    public void whenMutateUser_WithoutPassword_Then_ShouldGetUpdatedUserData() throws ExecutionException, InterruptedException {
+        authenticateUser();
+
+        UserDTO userDTO = new UserDTO("New Name", "new-email@mail.com", null);
+        var uni = userClient.editUser(userDTO);
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var user = subscriber
+            .awaitItem()
+            //.awaitItem(Duration.ofMillis(100))
+            .getItem();
+        assertNotNull(user);
+        assertEquals(userDTO.getName(), user.getName());
+        assertEquals(userDTO.getEmail(), user.getEmail());
+
+        Mockito.verify(userService).editUser(userEntity(), userDTO);
+        Mockito.verify(userService).findUserByEmail(TEST_EMAIL);
+        Mockito.verifyNoMoreInteractions(userService);
+    }
+
+    private void authenticateUser() {
+        UserEntity userEntity = userEntity();
+        userEntity.setName(TEST_EMAIL);
+        QuarkusSecurityIdentity identity = QuarkusSecurityIdentity.builder().setPrincipal(userEntity).build();
+        Mockito
+            .when(jwtAuth.authenticate(Mockito.any(), Mockito.any()))
+            .thenReturn(Uni.createFrom().item(identity));
     }
 }

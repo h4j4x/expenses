@@ -24,6 +24,7 @@ import javax.enterprise.inject.Alternative;
 @Priority(1)
 public class AuthMechanism implements HttpAuthenticationMechanism {
     private final JWTAuthMechanism delegate;
+
     private final UserService userService;
 
     public AuthMechanism(JWTAuthMechanism delegate, UserService userService) {

@@ -4,7 +4,10 @@ import com.h4j4x.expenses.api.domain.UserEntity;
 import java.util.Objects;
 
 public class UserDTO extends UserCredentials {
-    private final String name;
+    private String name;
+
+    public UserDTO() {
+    }
 
     public UserDTO(String name, String email, String password) {
         super(email, password);
@@ -20,6 +23,10 @@ public class UserDTO extends UserCredentials {
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override

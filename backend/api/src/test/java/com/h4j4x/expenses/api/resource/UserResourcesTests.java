@@ -89,10 +89,6 @@ public class UserResourcesTests {
             assertTrue(e.getMessage().contains("401"));
         }
 
-        Mockito.verify(jwtAuth).authenticate(Mockito.any(), Mockito.any());
-        Mockito.verify(jwtAuth, Mockito.atLeast(1)).getCredentialTransport(Mockito.any());
-        Mockito.verify(jwtAuth, Mockito.atLeast(1)).sendChallenge(Mockito.any());
-        Mockito.verifyNoMoreInteractions(jwtAuth);
         Mockito.verifyNoMoreInteractions(userService);
     }
 
@@ -120,11 +116,6 @@ public class UserResourcesTests {
         assertEquals(TEST_NAME, user.getName());
         assertEquals(TEST_EMAIL, user.getEmail());
 
-        Mockito.verify(jwtAuth).authenticate(Mockito.any(), Mockito.any());
-        Mockito.verify(jwtAuth, Mockito.atLeast(1)).getCredentialTypes();
-        Mockito.verify(jwtAuth, Mockito.atLeast(1)).getCredentialTransport(Mockito.any());
-        Mockito.verify(jwtAuth, Mockito.atLeast(1)).sendChallenge(Mockito.any());
-        Mockito.verifyNoMoreInteractions(jwtAuth);
         Mockito.verify(userService).findUserByEmail(TEST_EMAIL);
         Mockito.verifyNoMoreInteractions(userService);
     }

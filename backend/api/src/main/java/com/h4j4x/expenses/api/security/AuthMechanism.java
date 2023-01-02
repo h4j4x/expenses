@@ -25,12 +25,10 @@ import javax.enterprise.inject.Alternative;
 public class AuthMechanism implements HttpAuthenticationMechanism {
     private final JWTAuthMechanism delegate;
     private final UserService userService;
-    private final AuthContext authContext;
 
-    public AuthMechanism(JWTAuthMechanism delegate, UserService userService, AuthContext authContext) {
+    public AuthMechanism(JWTAuthMechanism delegate, UserService userService) {
         this.delegate = delegate;
         this.userService = userService;
-        this.authContext = authContext;
     }
 
     @Override
@@ -42,7 +40,6 @@ public class AuthMechanism implements HttpAuthenticationMechanism {
     }
 
     private SecurityIdentity createSecurityIdentity(UserEntity userEntity, SecurityIdentity identity) {
-        authContext.setAuthUser(userEntity);
         return QuarkusSecurityIdentity.builder()
             .setPrincipal(userEntity)
             .addAttributes(identity.getAttributes())

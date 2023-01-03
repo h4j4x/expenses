@@ -1,9 +1,9 @@
 package com.h4j4x.expenses.api.repository;
 
+import com.h4j4x.expenses.api.TestConstants;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
-import java.time.Duration;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ public class UserRepositoryTests {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
         subscriber
-            .awaitFailure(Duration.ofMillis(100))
+            .awaitFailure(TestConstants.UNI_DURATION)
             .assertFailedWith(ConstraintViolationException.class);
     }
 
@@ -34,7 +34,7 @@ public class UserRepositoryTests {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
         subscriber
-            .awaitFailure(Duration.ofMillis(100))
+            .awaitFailure(TestConstants.UNI_DURATION)
             .assertFailedWith(ConstraintViolationException.class);
     }
 
@@ -46,7 +46,7 @@ public class UserRepositoryTests {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
         var userEntity = subscriber
-            .awaitItem(Duration.ofMillis(100))
+            .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertNotNull(userEntity);
         assertNotNull(userEntity.getId());
@@ -61,14 +61,14 @@ public class UserRepositoryTests {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
         subscriber
-            .awaitItem(Duration.ofMillis(100));
+            .awaitItem(TestConstants.UNI_DURATION);
 
         uni = userRepo.findByEmail(user.getEmail());
         subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
         UserEntity userEntity = subscriber
-            .awaitItem(Duration.ofMillis(100))
+            .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertNotNull(userEntity);
         assertNotNull(userEntity.getId());
@@ -82,7 +82,7 @@ public class UserRepositoryTests {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
         UserEntity userEntity = subscriber
-            .awaitItem(Duration.ofMillis(100))
+            .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertNull(userEntity);
     }

@@ -1,5 +1,6 @@
 package com.h4j4x.expenses.api.service;
 
+import com.h4j4x.expenses.api.TestConstants;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.UserCredentials;
 import com.h4j4x.expenses.api.model.UserDTO;
@@ -9,7 +10,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
-import java.time.Duration;
 import java.util.Optional;
 import javax.ws.rs.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +45,7 @@ public class UserServiceTests {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
         subscriber
-            .awaitFailure(Duration.ofMillis(100))
+            .awaitFailure(TestConstants.UNI_DURATION)
             .assertFailedWith(BadRequestException.class, UserService.USER_EMAIL_EXISTS_MESSAGE);
 
         Mockito.verify(userRepo).findByEmail(TEST_EMAIL);
@@ -67,7 +67,7 @@ public class UserServiceTests {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
         var userEntity = subscriber
-            .awaitItem(Duration.ofMillis(100))
+            .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertNotNull(userEntity);
         assertEquals(user.getEmail(), userEntity.getEmail());
@@ -84,7 +84,7 @@ public class UserServiceTests {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
         var userEntity = subscriber
-            .awaitItem(Duration.ofMillis(100))
+            .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertNotNull(userEntity);
         assertEquals(TEST_EMAIL, userEntity.getEmail());
@@ -100,7 +100,7 @@ public class UserServiceTests {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
         var userEntity = subscriber
-            .awaitItem(Duration.ofMillis(100))
+            .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertNotNull(userEntity);
         assertEquals(TEST_EMAIL, userEntity.getEmail());
@@ -116,7 +116,7 @@ public class UserServiceTests {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
         var userEntity = subscriber
-            .awaitItem(Duration.ofMillis(100))
+            .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertNull(userEntity);
 
@@ -137,7 +137,7 @@ public class UserServiceTests {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
         var userEntity = subscriber
-            .awaitItem(Duration.ofMillis(100))
+            .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertNotNull(userEntity);
         assertEquals(edited.getName(), userEntity.getName());

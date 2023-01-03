@@ -1,6 +1,7 @@
 package com.h4j4x.expenses.api.domain;
 
 import java.security.Principal;
+import java.util.Objects;
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -77,5 +78,19 @@ public class UserEntity implements Principal {
 
     public void setSalt(String salt) {
         this.salt = salt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserEntity that = (UserEntity) o;
+        if (Objects.equals(id, that.id)) return true;
+        return email.equals(that.email);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, email);
     }
 }

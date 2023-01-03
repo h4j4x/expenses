@@ -3,6 +3,7 @@ package com.h4j4x.expenses.api.resource;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.UserDTO;
 import com.h4j4x.expenses.api.service.UserService;
+import io.quarkus.hibernate.reactive.panache.common.runtime.ReactiveTransactional;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.mutiny.Uni;
 import org.eclipse.microprofile.graphql.Description;
@@ -11,6 +12,7 @@ import org.eclipse.microprofile.graphql.Mutation;
 import org.eclipse.microprofile.graphql.Query;
 
 @GraphQLApi
+@ReactiveTransactional
 public class UserResource {
     private final SecurityIdentity identity;
 
@@ -25,14 +27,16 @@ public class UserResource {
     @Description("Get authenticated user")
     public Uni<UserDTO> getUser() {
         return Uni.createFrom()
-            .item(UserDTO.fromEntity(authEntity()));
+            .item(authEntity())
+            .onItem().transform(UserDTO::fromEntity);
     }
 
     @Mutation
     @Description("Edit authenticated user")
     public Uni<UserDTO> editUser(UserDTO user) {
-        return userService
-            .editUser(authEntity(), user)
+        return Uni.createFrom()
+            .item(authEntity())
+            .flatMap(userEntity -> userService.editUser(userEntity, user))
             .onItem().transform(UserDTO::fromEntity);
     }
 

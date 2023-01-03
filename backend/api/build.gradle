@@ -17,6 +17,7 @@ dependencies {
 
     runtimeOnly "io.quarkus:quarkus-reactive-pg-client"
 
+    testImplementation "com.github.javafaker:javafaker:${javaFakerVersion}"
     testImplementation "io.quarkus:quarkus-junit5"
     testImplementation "io.quarkus:quarkus-junit5-mockito"
     testImplementation "io.quarkus:quarkus-smallrye-graphql-client"

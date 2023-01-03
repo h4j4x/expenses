@@ -1,5 +1,6 @@
 package com.h4j4x.expenses.api.resource;
 
+import com.h4j4x.expenses.api.DataGen;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.UserCredentials;
 import com.h4j4x.expenses.api.model.UserDTO;
@@ -20,13 +21,12 @@ import static org.hamcrest.Matchers.*;
 
 @QuarkusTest
 @TestHTTPEndpoint(AuthResource.class)
-public class AuthResourceTests {
-    private static final String TEST_NAME = "test";
-    private static final String TEST_EMAIL = "test@mail.com";
-    private static final String TEST_PASSWORD = "12345678";
-
+public class AuthResourceTests extends DataGen {
     @InjectMock
     UserService userService;
+    private final String TEST_NAME = genUserName();
+    private final String TEST_EMAIL = genUserEmail();
+    private final String TEST_PASSWORD = genUserPassword();
 
     @BeforeEach
     void setUp() {

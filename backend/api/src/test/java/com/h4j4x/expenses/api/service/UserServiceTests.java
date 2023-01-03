@@ -1,5 +1,6 @@
 package com.h4j4x.expenses.api.service;
 
+import com.h4j4x.expenses.api.DataGen;
 import com.h4j4x.expenses.api.TestConstants;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.UserCredentials;
@@ -10,18 +11,16 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
-import java.util.Optional;
 import javax.ws.rs.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 
 @QuarkusTest
-public class UserServiceTests {
-    private static final String TEST_EMAIL = "test@mail.com";
-    private static final String TEST_PASSWORD = "12345678";
+public class UserServiceTests extends DataGen {
+    private final String TEST_EMAIL = genUserEmail();
+    private final String TEST_PASSWORD = genUserPassword();
 
     private UserService userService;
 
@@ -30,17 +29,20 @@ public class UserServiceTests {
 
     @BeforeEach
     void setUp() {
-        var user = new UserEntity("TEST", TEST_EMAIL, TEST_PASSWORD);
+        var user = new UserEntity(genUserName(), TEST_EMAIL, TEST_PASSWORD);
         user.setId(1L);
         Mockito
             .when(userRepo.findByEmail(TEST_EMAIL))
             .thenReturn(Uni.createFrom().item(user));
+        Mockito
+            .when(userRepo.countByEmail(TEST_EMAIL))
+            .thenReturn(Uni.createFrom().item(1L));
         userService = new UserService(userRepo, new DummyStringHasher());
     }
 
     @Test
     void whenCreateUser_WithTestUserEmail_Then_ShouldThrowBadRequest() {
-        var uni = userService.createUser(new UserDTO("TEST", TEST_EMAIL, TEST_PASSWORD));
+        var uni = userService.createUser(new UserDTO(genUserName(), TEST_EMAIL, TEST_PASSWORD));
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
@@ -48,21 +50,21 @@ public class UserServiceTests {
             .awaitFailure(TestConstants.UNI_DURATION)
             .assertFailedWith(BadRequestException.class, UserService.USER_EMAIL_EXISTS_MESSAGE);
 
-        Mockito.verify(userRepo).findByEmail(TEST_EMAIL);
+        Mockito.verify(userRepo).countByEmail(TEST_EMAIL);
         Mockito.verifyNoMoreInteractions(userRepo);
     }
 
     @Test
     void whenCreateUser_WithOtherEmail_Then_ShouldCreateUserEntity() {
-        var user = new UserEntity("TEST", "other-" + TEST_EMAIL, TEST_PASSWORD);
+        var user = new UserEntity(genUserName(), "other-" + TEST_EMAIL, TEST_PASSWORD);
         Mockito
-            .when(userRepo.findByEmail(user.getEmail()))
-            .thenReturn(Uni.createFrom().optional(Optional.empty()));
+            .when(userRepo.countByEmail(user.getEmail()))
+            .thenReturn(Uni.createFrom().item(0L));
         Mockito
-            .when(userRepo.save(any(UserEntity.class)))
+            .when(userRepo.save(Mockito.any()))
             .thenReturn(Uni.createFrom().item(user));
 
-        var uni = userService.createUser(new UserDTO("TEST", "other-" + TEST_EMAIL, TEST_PASSWORD));
+        var uni = userService.createUser(new UserDTO(genUserName(), user.getEmail(), TEST_PASSWORD));
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
@@ -72,8 +74,8 @@ public class UserServiceTests {
         assertNotNull(userEntity);
         assertEquals(user.getEmail(), userEntity.getEmail());
 
-        Mockito.verify(userRepo).findByEmail(user.getEmail());
-        Mockito.verify(userRepo).save(any(UserEntity.class));
+        Mockito.verify(userRepo).countByEmail(user.getEmail());
+        Mockito.verify(userRepo).save(Mockito.any());
         Mockito.verifyNoMoreInteractions(userRepo);
     }
 
@@ -126,10 +128,15 @@ public class UserServiceTests {
 
     @Test
     void whenEditUser_WithoutPassword_Then_ShouldEditUserEntityAndKeepPassword() {
-        var user = new UserEntity("TEST", "other-" + TEST_EMAIL, TEST_PASSWORD);
+        var user = new UserEntity(genUserName(), "other-" + TEST_EMAIL, TEST_PASSWORD);
+        user.setId(10L);
         var edited = new UserEntity(user.getName(), "another-" + TEST_EMAIL, TEST_PASSWORD);
+        edited.setId(user.getId());
         Mockito
-            .when(userRepo.save(any(UserEntity.class)))
+            .when(userRepo.countByEmailAndNotId(edited.getEmail(), edited.getId()))
+            .thenReturn(Uni.createFrom().item(0L));
+        Mockito
+            .when(userRepo.save(edited))
             .thenReturn(Uni.createFrom().item(edited));
 
         var uni = userService.editUser(user, new UserDTO(user.getName(), edited.getEmail(), null));
@@ -144,7 +151,29 @@ public class UserServiceTests {
         assertEquals(edited.getEmail(), userEntity.getEmail());
         assertEquals(edited.getPassword(), userEntity.getPassword());
 
-        Mockito.verify(userRepo).save(any(UserEntity.class));
+        Mockito.verify(userRepo).countByEmailAndNotId(edited.getEmail(), edited.getId());
+        Mockito.verify(userRepo).save(edited);
+        Mockito.verifyNoMoreInteractions(userRepo);
+    }
+
+    @Test
+    void whenEditUser_WithExistentEmail_Then_ShouldThrow400() {
+        var user = new UserEntity(genUserName(), "other-" + TEST_EMAIL, TEST_PASSWORD);
+        user.setId(10L);
+        var newEmail = "another-" + TEST_EMAIL;
+        Mockito
+            .when(userRepo.countByEmailAndNotId(newEmail, user.getId()))
+            .thenReturn(Uni.createFrom().item(1L));
+
+        var uni = userService.editUser(user, new UserDTO(user.getName(), newEmail, null));
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        subscriber
+            .awaitFailure(TestConstants.UNI_DURATION)
+            .assertFailedWith(BadRequestException.class, UserService.USER_EMAIL_EXISTS_MESSAGE);
+
+        Mockito.verify(userRepo).countByEmailAndNotId(newEmail, user.getId());
         Mockito.verifyNoMoreInteractions(userRepo);
     }
 }

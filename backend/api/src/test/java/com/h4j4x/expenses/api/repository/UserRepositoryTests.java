@@ -1,5 +1,6 @@
 package com.h4j4x.expenses.api.repository;
 
+import com.h4j4x.expenses.api.DataGen;
 import com.h4j4x.expenses.api.TestConstants;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import io.quarkus.test.junit.QuarkusTest;
@@ -10,13 +11,13 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-public class UserRepositoryTests {
+public class UserRepositoryTests extends DataGen {
     @Inject
     UserRepository userRepo;
 
     @Test
     void whenCreateUser_Invalid_Then_ShouldThrowError() {
-        var user = new UserEntity("name", null, null);
+        var user = new UserEntity(genUserName(), null, null);
         var uni = userRepo.save(user);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -28,7 +29,7 @@ public class UserRepositoryTests {
 
     @Test
     void whenCreateUser_InvalidEmail_Then_ShouldThrowError() {
-        var user = new UserEntity("name", "email", "password");
+        var user = new UserEntity(genUserName(), getUserFirstName(), genUserPassword());
         var uni = userRepo.save(user);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -40,7 +41,7 @@ public class UserRepositoryTests {
 
     @Test
     void whenCreateUser_Then_ShouldAssignId() {
-        var user = new UserEntity("name", "email@mail.com", "password");
+        var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
         var uni = userRepo.save(user);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -55,7 +56,7 @@ public class UserRepositoryTests {
 
     @Test
     void whenFindUserByEmail_Then_ShouldGetUser() {
-        var user = new UserEntity("name", "email-1@mail.com", "password");
+        var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
         var uni = userRepo.save(user);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -76,8 +77,63 @@ public class UserRepositoryTests {
     }
 
     @Test
+    void whenCountUserByEmail_Then_ShouldGetCount() {
+        var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
+        var uni = userRepo.save(user);
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        subscriber
+            .awaitItem(TestConstants.UNI_DURATION);
+
+        var countUni = userRepo.countByEmail(user.getEmail());
+        var countSubscriber = countUni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        Long count = countSubscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertEquals(1L, count);
+    }
+
+    @Test
+    void whenCountOtherUsersByEmail_Then_ShouldGetNothing() {
+        var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
+        var uni = userRepo.save(user);
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var entity = subscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+
+        var countUni = userRepo.countByEmailAndNotId(user.getEmail(), entity.getId());
+        var countSubscriber = countUni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        Long count = countSubscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertEquals(0L, count);
+    }
+
+    @Test
+    void whenCountUserByEmail_NonRegistered_Then_ShouldGetNothing() {
+        var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
+
+        var uni = userRepo.countByEmail(user.getEmail());
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        Long count = subscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertEquals(0L, count);
+    }
+
+    @Test
     void whenFindUserByEmail_NonRegistered_Then_ShouldGetNothing() {
-        var uni = userRepo.findByEmail("non-email@mail.com");
+        var uni = userRepo.findByEmail(genUserEmail());
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 

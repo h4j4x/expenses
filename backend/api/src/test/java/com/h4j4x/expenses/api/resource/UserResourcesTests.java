@@ -1,5 +1,6 @@
 package com.h4j4x.expenses.api.resource;
 
+import com.h4j4x.expenses.api.DataGen;
 import com.h4j4x.expenses.api.TestConstants;
 import com.h4j4x.expenses.api.client.UserResourceClient;
 import com.h4j4x.expenses.api.domain.UserEntity;
@@ -23,10 +24,10 @@ import org.mockito.Mockito;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-public class UserResourcesTests {
-    private static final String TEST_NAME = "test";
-    private static final String TEST_EMAIL = "test@mail.com";
-    private static final String TEST_PASSWORD = "12345678";
+public class UserResourcesTests extends DataGen {
+    private final String TEST_NAME = genUserName();
+    private final String TEST_EMAIL = genUserEmail();
+    private final String TEST_PASSWORD = genUserPassword();
 
     @InjectMock
     JWTAuthMechanism jwtAuth;
@@ -103,7 +104,7 @@ public class UserResourcesTests {
 
     @Test
     public void whenMutateUser_WithoutPassword_Then_ShouldGetUpdatedUserData() {
-        var userDTO = new UserDTO("New Name", "new-email@mail.com", null);
+        var userDTO = new UserDTO(genUserName(), genUserEmail(), null);
         var updatedEntity = new UserEntity(userDTO.getName(), userDTO.getEmail(), TEST_PASSWORD);
         Mockito
             .when(userService.editUser(Mockito.any(), Mockito.any()))

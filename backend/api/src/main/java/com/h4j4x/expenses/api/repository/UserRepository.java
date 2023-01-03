@@ -30,4 +30,12 @@ public class UserRepository implements PanacheRepository<UserEntity> {
     public Uni<UserEntity> findByEmail(String email) {
         return find("email", email).firstResult();
     }
+
+    public Uni<Long> countByEmail(String email) {
+        return count("email", email);
+    }
+
+    public Uni<Long> countByEmailAndNotId(String email, Long id) {
+        return count("email = ?1 and id != ?2", email, id);
+    }
 }

@@ -24,9 +24,15 @@ public class UserService {
     }
 
     public Uni<UserEntity> createUser(UserDTO user) {
-        return userRepo.findByEmail(user.getEmail())
-            .onItem().ifNotNull().failWith(new BadRequestException(USER_EMAIL_EXISTS_MESSAGE))
-            .onItem().ifNull().switchTo(() -> createUserEntity(user));
+        return userRepo.countByEmail(user.getEmail())
+            .onItem().transform(count -> {
+                if (count > 0) {
+                    return null;
+                }
+                return user;
+            })
+            .onItem().ifNull().failWith(new BadRequestException(USER_EMAIL_EXISTS_MESSAGE))
+            .onItem().ifNotNull().transformToUni(this::createUserEntity);
     }
 
     private Uni<UserEntity> createUserEntity(UserDTO user) {
@@ -59,16 +65,34 @@ public class UserService {
 
     public Uni<UserEntity> editUser(UserEntity entity, UserDTO user) {
         return Uni.createFrom().<UserEntity>emitter(emitter -> {
-            try {
-                entity.setName(user.getName());
-                entity.setEmail(user.getEmail());
-                if (user.getPassword() != null) {
-                    entity.setPassword(stringHasher.hash(user.getPassword(), entity.getSalt()));
+                try {
+                    setUserData(entity, user);
+                    emitter.complete(entity);
+                } catch (GeneralSecurityException e) {
+                    emitter.fail(e);
                 }
-                emitter.complete(entity);
-            } catch (GeneralSecurityException e) {
-                emitter.fail(e);
-            }
-        }).flatMap(userRepo::save);
+            })
+            .chain(userEntity -> userRepo
+                .countByEmailAndNotId(userEntity.getEmail(), userEntity.getId())
+                .onItem().transform(count -> {
+                    if (count > 0) {
+                        return null;
+                    }
+                    return userEntity;
+                })
+                .onItem().ifNull().failWith(new BadRequestException(USER_EMAIL_EXISTS_MESSAGE))
+                .onItem().ifNotNull().transformToUni(userRepo::save));
+    }
+
+    private void setUserData(UserEntity entity, UserDTO user) throws GeneralSecurityException {
+        if (user.getName() != null) {
+            entity.setName(user.getName());
+        }
+        if (user.getEmail() != null) {
+            entity.setEmail(user.getEmail());
+        }
+        if (user.getPassword() != null) {
+            entity.setPassword(stringHasher.hash(user.getPassword(), entity.getSalt()));
+        }
     }
 }

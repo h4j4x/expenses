@@ -26,4 +26,12 @@ public class DataGen {
     protected String genRandomHex(int length) {
         return faker.random().hex(length);
     }
+
+    protected String genProductName() {
+        return faker.commerce().productName();
+    }
+
+    protected int genRandomNumber(int min, int max) {
+        return faker.number().numberBetween(min, max);
+    }
 }

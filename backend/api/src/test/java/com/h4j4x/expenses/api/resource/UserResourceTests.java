@@ -24,7 +24,7 @@ import org.mockito.Mockito;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-public class UserResourcesTests extends DataGen {
+public class UserResourceTests extends DataGen {
     private final String TEST_NAME = genUserName();
     private final String TEST_EMAIL = genUserEmail();
     private final String TEST_PASSWORD = genUserPassword();

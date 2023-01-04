@@ -5,6 +5,7 @@ import java.util.Objects;
 import javax.persistence.*;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "user_accounts", uniqueConstraints = {
@@ -15,6 +16,7 @@ public class UserAccount {
     @GeneratedValue
     private Long id;
 
+    @NotNull(message = "Account user is required")
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, updatable = false)
     private UserEntity user;
@@ -29,6 +31,18 @@ public class UserAccount {
 
     @Column(name = "balance_updated_at")
     private OffsetDateTime balanceUpdatedAt;
+
+    public UserAccount() {
+    }
+
+    public UserAccount(String name) {
+        this.name = name;
+    }
+
+    public UserAccount(UserEntity user, String name) {
+        this.user = user;
+        this.name = name;
+    }
 
     public Long getId() {
         return id;

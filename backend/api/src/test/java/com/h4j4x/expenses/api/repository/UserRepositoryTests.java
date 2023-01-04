@@ -55,7 +55,7 @@ public class UserRepositoryTests extends DataGen {
     }
 
     @Test
-    void whenFindUserByEmail_Then_ShouldGetUser() {
+    void whenFindUser_ByEmail_Then_ShouldGetUser() {
         var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
         var uni = userRepo.save(user);
         var subscriber = uni
@@ -77,7 +77,7 @@ public class UserRepositoryTests extends DataGen {
     }
 
     @Test
-    void whenCountUserByEmail_Then_ShouldGetCount() {
+    void whenCountUser_ByEmail_Then_ShouldGetCount() {
         var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
         var uni = userRepo.save(user);
         var subscriber = uni
@@ -90,14 +90,14 @@ public class UserRepositoryTests extends DataGen {
         var countSubscriber = countUni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
-        Long count = countSubscriber
+        var count = countSubscriber
             .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertEquals(1L, count);
     }
 
     @Test
-    void whenCountOtherUsersByEmail_Then_ShouldGetNothing() {
+    void whenCount_OtherUsersByEmail_Then_ShouldGetNothing() {
         var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
         var uni = userRepo.save(user);
         var subscriber = uni
@@ -111,28 +111,28 @@ public class UserRepositoryTests extends DataGen {
         var countSubscriber = countUni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
-        Long count = countSubscriber
+        var count = countSubscriber
             .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertEquals(0L, count);
     }
 
     @Test
-    void whenCountUserByEmail_NonRegistered_Then_ShouldGetNothing() {
+    void whenCountUser_ByEmail_NonRegistered_Then_ShouldGetNothing() {
         var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
 
         var uni = userRepo.countByEmail(user.getEmail());
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
-        Long count = subscriber
+        var count = subscriber
             .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertEquals(0L, count);
     }
 
     @Test
-    void whenFindUserByEmail_NonRegistered_Then_ShouldGetNothing() {
+    void whenFindUser_ByEmail_NonRegistered_Then_ShouldGetNothing() {
         var uni = userRepo.findByEmail(genUserEmail());
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());

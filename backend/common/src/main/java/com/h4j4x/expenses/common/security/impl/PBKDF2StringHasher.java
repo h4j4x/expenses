@@ -1,25 +1,25 @@
-package com.h4j4x.expenses.api.security.impl;
+package com.h4j4x.expenses.common.security.impl;
 
-import com.h4j4x.expenses.api.security.StringHasher;
+import com.h4j4x.expenses.common.security.StringHasher;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-import javax.inject.Singleton;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-@Singleton
 public class PBKDF2StringHasher implements StringHasher {
     private static final String ALGORITHM = "PBKDF2WithHmacSHA1";
     private static final String SEPARATOR = ":";
     private static final int RADIX = 16;
 
-    @ConfigProperty(name = "app.security.hash-iterations", defaultValue = "512")
-    Integer iterations = 512;
+    private final Integer iterations;
 
-    @ConfigProperty(name = "app.security.hash-key-length", defaultValue = "128")
-    Integer keyLength = 128;
+    private final Integer keyLength;
+
+    public PBKDF2StringHasher(Integer iterations, Integer keyLength) {
+        this.iterations = iterations;
+        this.keyLength = keyLength;
+    }
 
     @Override
     public String salt() {

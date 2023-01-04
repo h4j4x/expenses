@@ -1,6 +1,6 @@
 package com.h4j4x.expenses.api.resource;
 
-import com.h4j4x.expenses.api.DataGen;
+import com.h4j4x.expenses.api.DataGenerator;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.UserCredentials;
 import com.h4j4x.expenses.api.model.UserDTO;
@@ -12,6 +12,7 @@ import io.quarkus.test.junit.mockito.InjectMock;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.smallrye.mutiny.Uni;
+import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,28 +22,31 @@ import static org.hamcrest.Matchers.*;
 
 @QuarkusTest
 @TestHTTPEndpoint(AuthResource.class)
-public class AuthResourceTests extends DataGen {
+public class AuthResourceTests {
     @InjectMock
     UserService userService;
-    private final String TEST_NAME = genUserName();
-    private final String TEST_EMAIL = genUserEmail();
-    private final String TEST_PASSWORD = genUserPassword();
+
+    @Inject
+    DataGenerator dataGen;
+
+    private UserEntity user;
 
     @BeforeEach
     void setUp() {
-        var user = new UserEntity(TEST_NAME, TEST_EMAIL, TEST_PASSWORD);
+        user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         user.setId(1L);
         Mockito
-            .when(userService.findUserByEmail(TEST_EMAIL))
+            .when(userService.findUserByEmail(user.getEmail()))
             .thenReturn(Uni.createFrom().item(user));
+        var credentials = new UserCredentials(user.getEmail(), user.getPassword());
         Mockito
-            .when(userService.findUserByEmailAndPassword(new UserCredentials(TEST_EMAIL, TEST_PASSWORD)))
+            .when(userService.findUserByEmailAndPassword(credentials))
             .thenReturn(Uni.createFrom().item(user));
     }
 
     @Test
     public void whenPostSignUp_WithTestUserEmail_Then_ShouldThrow400() {
-        var user = new UserDTO(TEST_NAME, TEST_EMAIL, TEST_PASSWORD);
+        var user = new UserDTO(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         Mockito
             .when(userService.createUser(user))
             .thenThrow(new BadRequestException(UserService.USER_EMAIL_EXISTS_MESSAGE));
@@ -58,7 +62,7 @@ public class AuthResourceTests extends DataGen {
 
     @Test
     public void whenPostSignUp_WithOtherEmail_Then_ShouldGetJwtToken() {
-        var user = new UserDTO(TEST_NAME, "other-" + TEST_EMAIL, TEST_PASSWORD);
+        var user = new UserDTO(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         var userEntity = new UserEntity(user.getName(), user.getEmail(), user.getPassword());
         userEntity.setId(2L);
         Mockito
@@ -77,7 +81,7 @@ public class AuthResourceTests extends DataGen {
 
     @Test
     public void whenPostSignIn_WithCorrectCredentials_Then_ShouldGetJwtToken() {
-        var credentials = new UserCredentials(TEST_EMAIL, TEST_PASSWORD);
+        var credentials = new UserCredentials(user.getEmail(), user.getPassword());
         RestAssured.given()
             .contentType(ContentType.JSON)
             .when().body(credentials).post(AuthResource.SIGN_IN)
@@ -91,7 +95,7 @@ public class AuthResourceTests extends DataGen {
 
     @Test
     public void whenPostSignIn_WithInvalidCredentials_Then_ShouldThrow401() {
-        var credentials = new UserCredentials(TEST_EMAIL, TEST_PASSWORD + "-");
+        var credentials = new UserCredentials(dataGen.genUserEmail(), dataGen.genUserPassword());
         RestAssured.given()
             .contentType(ContentType.JSON)
             .when().body(credentials).post(AuthResource.SIGN_IN)
@@ -114,7 +118,7 @@ public class AuthResourceTests extends DataGen {
 
     @Test
     public void whenGetMe_Authenticated_Then_ShouldGetUserData() {
-        var credentials = new UserCredentials(TEST_EMAIL, TEST_PASSWORD);
+        var credentials = new UserCredentials(user.getEmail(), user.getPassword());
         var token = RestAssured.given()
             .contentType(ContentType.JSON)
             .when().body(credentials).post(AuthResource.SIGN_IN)
@@ -125,10 +129,10 @@ public class AuthResourceTests extends DataGen {
             .when().get(AuthResource.ME)
             .then()
             .statusCode(HttpStatus.SC_OK)
-            .body("email", is(TEST_EMAIL));
+            .body("email", is(user.getEmail()));
 
         Mockito.verify(userService).findUserByEmailAndPassword(credentials);
-        Mockito.verify(userService).findUserByEmail(TEST_EMAIL);
+        Mockito.verify(userService).findUserByEmail(user.getEmail());
         Mockito.verifyNoMoreInteractions(userService);
     }
 }

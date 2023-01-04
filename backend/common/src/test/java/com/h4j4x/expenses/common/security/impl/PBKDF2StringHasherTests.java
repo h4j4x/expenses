@@ -1,21 +1,24 @@
-package com.h4j4x.expenses.api.security.impl;
+package com.h4j4x.expenses.common.security.impl;
 
-import com.h4j4x.expenses.api.DataGen;
-import com.h4j4x.expenses.api.security.StringHasher;
+import com.github.javafaker.Faker;
+import com.h4j4x.expenses.common.security.StringHasher;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PBKDF2StringHasherTests extends DataGen {
+public class PBKDF2StringHasherTests {
+    private final Faker faker = new Faker(new Locale("en-US"));
+
     @TestFactory
     List<DynamicTest> testHashMatches() {
-        StringHasher stringHasher = new PBKDF2StringHasher();
+        StringHasher stringHasher = new PBKDF2StringHasher(512, 128);
         List<DynamicTest> tests = new ArrayList<>();
         var salt = stringHasher.salt();
         for (int i = 10; i <= 100; i += 10) {
-            var string = genRandomHex(i);
+            var string = faker.random().hex(i);
             tests.add(testHashing(stringHasher, string, salt));
         }
         return tests;

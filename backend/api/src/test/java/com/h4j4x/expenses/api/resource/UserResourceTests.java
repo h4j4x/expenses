@@ -1,6 +1,6 @@
 package com.h4j4x.expenses.api.resource;
 
-import com.h4j4x.expenses.api.DataGen;
+import com.h4j4x.expenses.api.DataGenerator;
 import com.h4j4x.expenses.api.TestConstants;
 import com.h4j4x.expenses.api.client.UserResourceClient;
 import com.h4j4x.expenses.api.domain.UserEntity;
@@ -24,11 +24,7 @@ import org.mockito.Mockito;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-public class UserResourceTests extends DataGen {
-    private final String TEST_NAME = genUserName();
-    private final String TEST_EMAIL = genUserEmail();
-    private final String TEST_PASSWORD = genUserPassword();
-
+public class UserResourceTests {
     @InjectMock
     JWTAuthMechanism jwtAuth;
 
@@ -38,11 +34,10 @@ public class UserResourceTests extends DataGen {
     @Inject
     UserResourceClient userClient;
 
-    private UserEntity userEntity() {
-        var user = new UserEntity(TEST_NAME, TEST_EMAIL, TEST_PASSWORD);
-        user.setId(1L);
-        return user;
-    }
+    @Inject
+    DataGenerator dataGen;
+
+    private UserEntity user;
 
     @BeforeEach
     void setUp() {
@@ -56,9 +51,11 @@ public class UserResourceTests extends DataGen {
         Mockito
             .when(jwtAuth.sendChallenge(Mockito.any()))
             .thenReturn(Uni.createFrom().item(true));
+        user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
+        user.setId(1L);
         Mockito
-            .when(userService.findUserByEmail(TEST_EMAIL))
-            .thenReturn(Uni.createFrom().item(userEntity()));
+            .when(userService.findUserByEmail(user.getEmail()))
+            .thenReturn(Uni.createFrom().item(user));
     }
 
     @Test
@@ -91,21 +88,21 @@ public class UserResourceTests extends DataGen {
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
-        var user = subscriber
+        var userData = subscriber
             .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
-        assertNotNull(user);
-        assertEquals(TEST_NAME, user.getName());
-        assertEquals(TEST_EMAIL, user.getEmail());
+        assertNotNull(userData);
+        assertEquals(user.getName(), userData.getName());
+        assertEquals(user.getEmail(), userData.getEmail());
 
-        Mockito.verify(userService).findUserByEmail(TEST_EMAIL);
+        Mockito.verify(userService).findUserByEmail(user.getEmail());
         Mockito.verifyNoMoreInteractions(userService);
     }
 
     @Test
     public void whenMutateUser_WithoutPassword_Then_ShouldGetUpdatedUserData() {
-        var userDTO = new UserDTO(genUserName(), genUserEmail(), null);
-        var updatedEntity = new UserEntity(userDTO.getName(), userDTO.getEmail(), TEST_PASSWORD);
+        var userDTO = new UserDTO(dataGen.genUserName(), dataGen.genUserEmail(), null);
+        var updatedEntity = new UserEntity(userDTO.getName(), userDTO.getEmail(), user.getPassword());
         Mockito
             .when(userService.editUser(Mockito.any(), Mockito.any()))
             .thenReturn(Uni.createFrom().item(updatedEntity));
@@ -116,22 +113,22 @@ public class UserResourceTests extends DataGen {
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
-        var user = subscriber
+        var userData = subscriber
             .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
-        assertNotNull(user);
-        assertEquals(userDTO.getName(), user.getName());
-        assertEquals(userDTO.getEmail(), user.getEmail());
+        assertNotNull(userData);
+        assertEquals(userDTO.getName(), userData.getName());
+        assertEquals(userDTO.getEmail(), userData.getEmail());
 
-        Mockito.verify(userService).editUser(userEntity(), userDTO);
-        Mockito.verify(userService).findUserByEmail(TEST_EMAIL);
+        Mockito.verify(userService).editUser(user, userDTO);
+        Mockito.verify(userService).findUserByEmail(user.getEmail());
         Mockito.verifyNoMoreInteractions(userService);
     }
 
     private void authenticateUser() {
-        UserEntity userEntity = userEntity();
-        userEntity.setName(TEST_EMAIL);
-        QuarkusSecurityIdentity identity = QuarkusSecurityIdentity.builder().setPrincipal(userEntity).build();
+        var userEntity = new UserEntity(user.getEmail(), user.getEmail(), user.getPassword());
+        userEntity.setId(user.getId());
+        var identity = QuarkusSecurityIdentity.builder().setPrincipal(userEntity).build();
         Mockito
             .when(jwtAuth.authenticate(Mockito.any(), Mockito.any()))
             .thenReturn(Uni.createFrom().item(identity));

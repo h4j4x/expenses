@@ -1,6 +1,6 @@
 package com.h4j4x.expenses.api.repository;
 
-import com.h4j4x.expenses.api.DataGen;
+import com.h4j4x.expenses.api.DataGenerator;
 import com.h4j4x.expenses.api.TestConstants;
 import com.h4j4x.expenses.api.domain.UserAccount;
 import com.h4j4x.expenses.api.domain.UserEntity;
@@ -12,12 +12,15 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-public class UserAccountRepositoryTests extends DataGen {
+public class UserAccountRepositoryTests {
     @Inject
     UserAccountRepository accountRepo;
 
     @Inject
     UserRepository userRepo;
+
+    @Inject
+    DataGenerator dataGen;
 
     @Test
     void whenCreateAccount_Invalid_Then_ShouldThrowError() {
@@ -33,7 +36,7 @@ public class UserAccountRepositoryTests extends DataGen {
 
     @Test
     void whenCreateAccount_WithoutUser_Then_ShouldThrowError() {
-        var account = new UserAccount(genProductName());
+        var account = new UserAccount(dataGen.genProductName());
         var uni = accountRepo.save(account);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -46,7 +49,7 @@ public class UserAccountRepositoryTests extends DataGen {
     @Test
     void whenCreateAccount_Then_ShouldAssignId() {
         var user = createUser();
-        var account = new UserAccount(user, genProductName());
+        var account = new UserAccount(user, dataGen.genProductName());
         var uni = accountRepo.save(account);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -62,7 +65,7 @@ public class UserAccountRepositoryTests extends DataGen {
     @Test
     void whenFindAccount_ByUserAndName_Then_ShouldGetUser() {
         var user = createUser();
-        var account = new UserAccount(user, genProductName());
+        var account = new UserAccount(user, dataGen.genProductName());
         var uni = accountRepo.save(account);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -85,7 +88,7 @@ public class UserAccountRepositoryTests extends DataGen {
     @Test
     void whenFindAccount_ByUserAndInvalidName_Then_ShouldGetNothing() {
         var user = createUser();
-        var account = new UserAccount(user, genProductName());
+        var account = new UserAccount(user, dataGen.genProductName());
         var uni = accountRepo.save(account);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -106,9 +109,9 @@ public class UserAccountRepositoryTests extends DataGen {
     @Test
     void whenCountAccount_ByUserAndName_Then_ShouldGetCount() {
         var user = createUser();
-        var items = genRandomNumber(1, 5);
+        var items = dataGen.genRandomNumber(1, 5);
         for (int i = 0; i < items; i++) {
-            var account = new UserAccount(user, genProductName());
+            var account = new UserAccount(user, dataGen.genProductName());
             accountRepo.save(account)
                 .subscribe().withSubscriber(UniAssertSubscriber.create())
                 .awaitItem(TestConstants.UNI_DURATION);
@@ -127,7 +130,7 @@ public class UserAccountRepositoryTests extends DataGen {
     @Test
     void whenCountAccount_ByUserAndNameAndSameId_Then_ShouldGetNothing() {
         var user = createUser();
-        var account = new UserAccount(user, genProductName());
+        var account = new UserAccount(user, dataGen.genProductName());
         var userAccount = accountRepo.save(account)
             .subscribe().withSubscriber(UniAssertSubscriber.create())
             .awaitItem(TestConstants.UNI_DURATION)
@@ -146,7 +149,7 @@ public class UserAccountRepositoryTests extends DataGen {
     @Test
     void whenCountAccount_ByUserAndNameAndOtherId_Then_ShouldGetOne() {
         var user = createUser();
-        var account = new UserAccount(user, genProductName());
+        var account = new UserAccount(user, dataGen.genProductName());
         var userAccount = accountRepo.save(account)
             .subscribe().withSubscriber(UniAssertSubscriber.create())
             .awaitItem(TestConstants.UNI_DURATION)
@@ -163,7 +166,7 @@ public class UserAccountRepositoryTests extends DataGen {
     }
 
     private UserEntity createUser() {
-        var entity = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
+        var entity = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         return userRepo.save(entity)
             .subscribe().withSubscriber(UniAssertSubscriber.create())
             .awaitItem(TestConstants.UNI_DURATION)

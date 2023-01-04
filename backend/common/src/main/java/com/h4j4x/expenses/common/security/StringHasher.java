@@ -1,4 +1,4 @@
-package com.h4j4x.expenses.api.security;
+package com.h4j4x.expenses.common.security;
 
 import java.security.GeneralSecurityException;
 

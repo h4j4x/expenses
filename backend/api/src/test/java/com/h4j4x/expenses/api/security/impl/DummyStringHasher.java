@@ -1,6 +1,6 @@
 package com.h4j4x.expenses.api.security.impl;
 
-import com.h4j4x.expenses.api.security.StringHasher;
+import com.h4j4x.expenses.common.security.StringHasher;
 import java.util.Objects;
 
 public class DummyStringHasher implements StringHasher {

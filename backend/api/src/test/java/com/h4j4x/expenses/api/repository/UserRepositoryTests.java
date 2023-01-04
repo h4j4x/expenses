@@ -1,6 +1,6 @@
 package com.h4j4x.expenses.api.repository;
 
-import com.h4j4x.expenses.api.DataGen;
+import com.h4j4x.expenses.api.DataGenerator;
 import com.h4j4x.expenses.api.TestConstants;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import io.quarkus.test.junit.QuarkusTest;
@@ -11,13 +11,16 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-public class UserRepositoryTests extends DataGen {
+public class UserRepositoryTests {
     @Inject
     UserRepository userRepo;
 
+    @Inject
+    DataGenerator dataGen;
+
     @Test
     void whenCreateUser_Invalid_Then_ShouldThrowError() {
-        var user = new UserEntity(genUserName(), null, null);
+        var user = new UserEntity(dataGen.genUserName(), null, null);
         var uni = userRepo.save(user);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -29,7 +32,7 @@ public class UserRepositoryTests extends DataGen {
 
     @Test
     void whenCreateUser_InvalidEmail_Then_ShouldThrowError() {
-        var user = new UserEntity(genUserName(), getUserFirstName(), genUserPassword());
+        var user = new UserEntity(dataGen.genUserName(), dataGen.getUserFirstName(), dataGen.genUserPassword());
         var uni = userRepo.save(user);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -41,7 +44,7 @@ public class UserRepositoryTests extends DataGen {
 
     @Test
     void whenCreateUser_Then_ShouldAssignId() {
-        var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         var uni = userRepo.save(user);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -56,7 +59,7 @@ public class UserRepositoryTests extends DataGen {
 
     @Test
     void whenFindUser_ByEmail_Then_ShouldGetUser() {
-        var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         var uni = userRepo.save(user);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -78,7 +81,7 @@ public class UserRepositoryTests extends DataGen {
 
     @Test
     void whenCountUser_ByEmail_Then_ShouldGetCount() {
-        var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         var uni = userRepo.save(user);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -98,7 +101,7 @@ public class UserRepositoryTests extends DataGen {
 
     @Test
     void whenCount_OtherUsersByEmail_Then_ShouldGetNothing() {
-        var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         var uni = userRepo.save(user);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -119,7 +122,7 @@ public class UserRepositoryTests extends DataGen {
 
     @Test
     void whenCountUser_ByEmail_NonRegistered_Then_ShouldGetNothing() {
-        var user = new UserEntity(genUserName(), genUserEmail(), genUserPassword());
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
 
         var uni = userRepo.countByEmail(user.getEmail());
         var subscriber = uni
@@ -133,7 +136,7 @@ public class UserRepositoryTests extends DataGen {
 
     @Test
     void whenFindUser_ByEmail_NonRegistered_Then_ShouldGetNothing() {
-        var uni = userRepo.findByEmail(genUserEmail());
+        var uni = userRepo.findByEmail(dataGen.genUserEmail());
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 

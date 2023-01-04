@@ -4,7 +4,7 @@ import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.UserCredentials;
 import com.h4j4x.expenses.api.model.UserDTO;
 import com.h4j4x.expenses.api.repository.UserRepository;
-import com.h4j4x.expenses.api.security.StringHasher;
+import com.h4j4x.expenses.common.security.StringHasher;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.unchecked.Unchecked;
 import java.security.GeneralSecurityException;

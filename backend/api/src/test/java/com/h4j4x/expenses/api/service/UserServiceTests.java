@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 public class UserServiceTests extends DataGen {
+    private final String TEST_NAME = genUserName();
     private final String TEST_EMAIL = genUserEmail();
     private final String TEST_PASSWORD = genUserPassword();
 
@@ -29,7 +30,7 @@ public class UserServiceTests extends DataGen {
 
     @BeforeEach
     void setUp() {
-        var user = new UserEntity(genUserName(), TEST_EMAIL, TEST_PASSWORD);
+        var user = new UserEntity(TEST_NAME, TEST_EMAIL, TEST_PASSWORD);
         user.setId(1L);
         Mockito
             .when(userRepo.findByEmail(TEST_EMAIL))
@@ -42,7 +43,7 @@ public class UserServiceTests extends DataGen {
 
     @Test
     void whenCreateUser_WithTestUserEmail_Then_ShouldThrowBadRequest() {
-        var uni = userService.createUser(new UserDTO(genUserName(), TEST_EMAIL, TEST_PASSWORD));
+        var uni = userService.createUser(new UserDTO(TEST_NAME, TEST_EMAIL, TEST_PASSWORD));
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
@@ -56,7 +57,7 @@ public class UserServiceTests extends DataGen {
 
     @Test
     void whenCreateUser_WithOtherEmail_Then_ShouldCreateUserEntity() {
-        var user = new UserEntity(genUserName(), "other-" + TEST_EMAIL, TEST_PASSWORD);
+        var user = new UserEntity(TEST_NAME, "other-" + TEST_EMAIL, TEST_PASSWORD);
         Mockito
             .when(userRepo.countByEmail(user.getEmail()))
             .thenReturn(Uni.createFrom().item(0L));
@@ -64,7 +65,7 @@ public class UserServiceTests extends DataGen {
             .when(userRepo.save(Mockito.any()))
             .thenReturn(Uni.createFrom().item(user));
 
-        var uni = userService.createUser(new UserDTO(genUserName(), user.getEmail(), TEST_PASSWORD));
+        var uni = userService.createUser(new UserDTO(TEST_NAME, user.getEmail(), TEST_PASSWORD));
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
@@ -128,7 +129,7 @@ public class UserServiceTests extends DataGen {
 
     @Test
     void whenEditUser_WithoutPassword_Then_ShouldEditUserEntityAndKeepPassword() {
-        var user = new UserEntity(genUserName(), "other-" + TEST_EMAIL, TEST_PASSWORD);
+        var user = new UserEntity(TEST_NAME, "other-" + TEST_EMAIL, TEST_PASSWORD);
         user.setId(10L);
         var edited = new UserEntity(user.getName(), "another-" + TEST_EMAIL, TEST_PASSWORD);
         edited.setId(user.getId());
@@ -158,7 +159,7 @@ public class UserServiceTests extends DataGen {
 
     @Test
     void whenEditUser_WithExistentEmail_Then_ShouldThrow400() {
-        var user = new UserEntity(genUserName(), "other-" + TEST_EMAIL, TEST_PASSWORD);
+        var user = new UserEntity(TEST_NAME, "other-" + TEST_EMAIL, TEST_PASSWORD);
         user.setId(10L);
         var newEmail = "another-" + TEST_EMAIL;
         Mockito

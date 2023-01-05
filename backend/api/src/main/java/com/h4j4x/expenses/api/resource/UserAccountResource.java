@@ -6,9 +6,8 @@ import com.h4j4x.expenses.api.service.UserAccountService;
 import io.quarkus.hibernate.reactive.panache.common.runtime.ReactiveTransactional;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.mutiny.Uni;
-import org.eclipse.microprofile.graphql.Description;
-import org.eclipse.microprofile.graphql.GraphQLApi;
-import org.eclipse.microprofile.graphql.Mutation;
+import java.util.List;
+import org.eclipse.microprofile.graphql.*;
 
 @GraphQLApi
 @ReactiveTransactional
@@ -29,6 +28,16 @@ public class UserAccountResource {
             .item(authEntity())
             .flatMap(userEntity -> accountService.addAccount(userEntity, account))
             .onItem().transform(UserAccountDTO::fromAccount);
+    }
+
+    @Query
+    @Description("Get user accounts")
+    public Uni<List<UserAccountDTO>> getUserAccounts() {
+        return accounts(authEntity());
+    }
+
+    public Uni<List<UserAccountDTO>> accounts(@Source UserEntity user) {
+        return accountService.getAccounts(user);
     }
 
     private UserEntity authEntity() {

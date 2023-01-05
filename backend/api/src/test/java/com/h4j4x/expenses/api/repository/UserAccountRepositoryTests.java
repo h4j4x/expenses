@@ -6,6 +6,8 @@ import com.h4j4x.expenses.api.domain.UserAccount;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
@@ -107,10 +109,10 @@ public class UserAccountRepositoryTests {
     }
 
     @Test
-    void whenCountAccount_ByUserAndName_Then_ShouldGetCount() {
+    void whenCountAccounts_ByUser_Then_ShouldGetCount() {
         var user = createUser();
-        var items = dataGen.genRandomNumber(1, 5);
-        for (int i = 0; i < items; i++) {
+        var itemsCount = dataGen.genRandomNumber(1, 5);
+        for (int i = 0; i < itemsCount; i++) {
             var account = new UserAccount(user, dataGen.genProductName());
             accountRepo.save(account)
                 .subscribe().withSubscriber(UniAssertSubscriber.create())
@@ -124,11 +126,38 @@ public class UserAccountRepositoryTests {
         var count = countSubscriber
             .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
-        assertEquals(items, count);
+        assertEquals(itemsCount, count);
     }
 
     @Test
-    void whenCountAccount_ByUserAndNameAndSameId_Then_ShouldGetNothing() {
+    void whenFindAccounts_ByUser_Then_ShouldGetData() {
+        var user = createUser();
+        var itemsCount = dataGen.genRandomNumber(5, 10);
+        List<UserAccount> items = new ArrayList<>(itemsCount);
+        for (int i = 0; i < itemsCount; i++) {
+            var account = new UserAccount(user, dataGen.genProductName());
+            var item = accountRepo.save(account)
+                .subscribe().withSubscriber(UniAssertSubscriber.create())
+                .awaitItem(TestConstants.UNI_DURATION)
+                .getItem();
+            items.add(item);
+        }
+
+        var findUni = accountRepo.findAllByUser(user);
+        var findSubscriber = findUni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var list = findSubscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertEquals(itemsCount, list.size());
+        for (UserAccount item : items) {
+            assertTrue(list.contains(item));
+        }
+    }
+
+    @Test
+    void whenCountAccounts_ByUserAndNameAndSameId_Then_ShouldGetNothing() {
         var user = createUser();
         var account = new UserAccount(user, dataGen.genProductName());
         var userAccount = accountRepo.save(account)
@@ -147,7 +176,7 @@ public class UserAccountRepositoryTests {
     }
 
     @Test
-    void whenCountAccount_ByUserAndNameAndOtherId_Then_ShouldGetOne() {
+    void whenCountAccounts_ByUserAndNameAndOtherId_Then_ShouldGetOne() {
         var user = createUser();
         var account = new UserAccount(user, dataGen.genProductName());
         var userAccount = accountRepo.save(account)
@@ -166,7 +195,7 @@ public class UserAccountRepositoryTests {
     }
 
     @Test
-    void whenCountAccount_ByUserAndName_Then_ShouldGetOne() {
+    void whenCountAccounts_ByUserAndName_Then_ShouldGetOne() {
         var user = createUser();
         var account = new UserAccount(user, dataGen.genProductName());
         var userAccount = accountRepo.save(account)

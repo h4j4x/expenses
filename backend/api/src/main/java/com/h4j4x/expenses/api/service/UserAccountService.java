@@ -5,6 +5,7 @@ import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.UserAccountDTO;
 import com.h4j4x.expenses.api.repository.UserAccountRepository;
 import io.smallrye.mutiny.Uni;
+import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.BadRequestException;
 
@@ -34,5 +35,11 @@ public class UserAccountService {
         var userAccount = new UserAccount(user, account.getName());
         // todo: if balance > 0, add transaction
         return accountRepo.save(userAccount);
+    }
+
+    public Uni<List<UserAccountDTO>> getAccounts(UserEntity user) {
+        return accountRepo.findAllByUser(user)
+            .map(userAccounts -> userAccounts.stream()
+                .map(UserAccountDTO::fromAccount).toList());
     }
 }

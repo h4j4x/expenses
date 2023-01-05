@@ -3,6 +3,8 @@ package com.h4j4x.expenses.api.repository;
 import com.h4j4x.expenses.api.domain.UserAccount;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import io.smallrye.mutiny.Uni;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import javax.enterprise.context.ApplicationScoped;
 import javax.validation.Validator;
@@ -31,6 +33,13 @@ public class UserAccountRepository extends BaseRepository<UserAccount> {
             return count("user_id", user.getId());
         }
         return Uni.createFrom().item(0L);
+    }
+
+    public Uni<List<UserAccount>> findAllByUser(UserEntity user) {
+        if (user != null) {
+            return find("user_id", user.getId()).list();
+        }
+        return Uni.createFrom().item(Collections.emptyList());
     }
 
     public Uni<Long> countByUserAndName(UserEntity user, String name) {

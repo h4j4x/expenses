@@ -33,9 +33,16 @@ public class UserAccountRepository extends BaseRepository<UserAccount> {
         return Uni.createFrom().item(0L);
     }
 
-    public Uni<Long> countByUserAndNameAndNotId(UserEntity user, String email, Long id) {
+    public Uni<Long> countByUserAndName(UserEntity user, String name) {
         if (user != null) {
-            return count("user_id = ?1 and name = ?2 and id != ?3", user.getId(), email, id);
+            return count("user_id = ?1 and name = ?2", user.getId(), name);
+        }
+        return Uni.createFrom().item(0L);
+    }
+
+    public Uni<Long> countByUserAndNameAndNotId(UserEntity user, String name, Long id) {
+        if (user != null) {
+            return count("user_id = ?1 and name = ?2 and id != ?3", user.getId(), name, id);
         }
         return Uni.createFrom().item(0L);
     }

@@ -165,6 +165,25 @@ public class UserAccountRepositoryTests {
         assertEquals(1L, count);
     }
 
+    @Test
+    void whenCountAccount_ByUserAndName_Then_ShouldGetOne() {
+        var user = createUser();
+        var account = new UserAccount(user, dataGen.genProductName());
+        var userAccount = accountRepo.save(account)
+            .subscribe().withSubscriber(UniAssertSubscriber.create())
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+
+        var countUni = accountRepo.countByUserAndName(user, userAccount.getName());
+        var countSubscriber = countUni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var count = countSubscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertEquals(1L, count);
+    }
+
     private UserEntity createUser() {
         var entity = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         return userRepo.save(entity)

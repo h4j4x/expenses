@@ -1,13 +1,10 @@
 package com.h4j4x.expenses.api.model;
 
 import com.h4j4x.expenses.api.domain.UserEntity;
-import java.util.List;
 import java.util.Objects;
 
 public class UserDTO extends UserCredentials {
     private String name;
-
-    private List<UserAccountDTO> accounts;
 
     public UserDTO() {
     }
@@ -30,14 +27,6 @@ public class UserDTO extends UserCredentials {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public List<UserAccountDTO> getAccounts() {
-        return accounts;
-    }
-
-    public void setAccounts(List<UserAccountDTO> accounts) {
-        this.accounts = accounts;
     }
 
     @Override

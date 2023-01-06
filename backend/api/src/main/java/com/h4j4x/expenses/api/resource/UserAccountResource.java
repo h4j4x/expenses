@@ -7,7 +7,10 @@ import io.quarkus.hibernate.reactive.panache.common.runtime.ReactiveTransactiona
 import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.mutiny.Uni;
 import java.util.List;
-import org.eclipse.microprofile.graphql.*;
+import org.eclipse.microprofile.graphql.Description;
+import org.eclipse.microprofile.graphql.GraphQLApi;
+import org.eclipse.microprofile.graphql.Mutation;
+import org.eclipse.microprofile.graphql.Query;
 
 @GraphQLApi
 @ReactiveTransactional
@@ -33,12 +36,7 @@ public class UserAccountResource {
     @Query
     @Description("Get user accounts")
     public Uni<List<UserAccountDTO>> getUserAccounts() {
-        return accounts(authEntity());
-    }
-
-    @Query
-    public Uni<List<UserAccountDTO>> accounts(@Source UserEntity user) {
-        return accountService.getAccounts(user); // todo: test
+        return accountService.getAccounts(authEntity());
     }
 
     private UserEntity authEntity() {

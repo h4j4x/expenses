@@ -28,6 +28,13 @@ public class UserAccountRepository extends BaseRepository<UserAccount> {
         return Uni.createFrom().optional(Optional.empty());
     }
 
+    public Uni<UserAccount> findByUserAndId(UserEntity user, Long id) {
+        if (user != null) {
+            return find("user_id = ?1 and id = ?2", user.getId(), id).firstResult();
+        }
+        return Uni.createFrom().optional(Optional.empty());
+    }
+
     public Uni<Long> countByUser(UserEntity user) {
         if (user != null) {
             return count("user_id", user.getId());

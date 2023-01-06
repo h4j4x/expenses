@@ -41,6 +41,16 @@ public class UserAccountResource {
                 .map(UserAccountDTO::fromAccount).toList());
     }
 
+    // todo: test
+    @Mutation
+    @Description("Edit user account")
+    public Uni<UserAccountDTO> editUserAccount(String key, UserAccountDTO account) {
+        return Uni.createFrom()
+            .item(authEntity())
+            .flatMap(user -> accountService.editAccount(user, key, account))
+            .onItem().transform(UserAccountDTO::fromAccount);
+    }
+
     private UserEntity authEntity() {
         return (UserEntity) identity.getPrincipal();
     }

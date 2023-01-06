@@ -65,7 +65,7 @@ public class UserAccountRepositoryTests {
     }
 
     @Test
-    void whenFindAccount_ByUserAndName_Then_ShouldGetUser() {
+    void whenFindAccount_ByUserAndName_Then_ShouldGetUserAccount() {
         var user = createUser();
         var account = new UserAccount(user, dataGen.genProductName());
         var uni = accountRepo.save(account);
@@ -76,6 +76,30 @@ public class UserAccountRepositoryTests {
             .awaitItem(TestConstants.UNI_DURATION);
 
         uni = accountRepo.findByUserAndName(user, account.getName());
+        subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        UserAccount userAccount = subscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertNotNull(userAccount);
+        assertNotNull(userAccount.getId());
+        assertEquals(account.getName(), userAccount.getName());
+    }
+
+    @Test
+    void whenFindAccount_ByUserAndId_Then_ShouldGetUserAccount() {
+        var user = createUser();
+        var account = new UserAccount(user, dataGen.genProductName());
+        var uni = accountRepo.save(account);
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        account = subscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+
+        uni = accountRepo.findByUserAndId(user, account.getId());
         subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 

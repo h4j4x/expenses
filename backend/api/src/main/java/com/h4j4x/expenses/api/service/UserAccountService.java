@@ -8,10 +8,12 @@ import io.smallrye.mutiny.Uni;
 import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 
 @ApplicationScoped
 public class UserAccountService {
     public static final String ACCOUNT_NAME_EXISTS_MESSAGE = "Account name already registered";
+    public static final String ACCOUNT_NOT_FOUND_MESSAGE = "Account not found";
 
     private final UserAccountRepository accountRepo;
 
@@ -39,5 +41,21 @@ public class UserAccountService {
 
     public Uni<List<UserAccount>> getAccounts(UserEntity user) {
         return accountRepo.findAllByUser(user);
+    }
+
+    // todo: test
+    public Uni<UserAccount> editAccount(UserEntity user, String key, UserAccountDTO account) {
+        Long userId = UserAccount.parseUserId(key);
+        if (!user.getId().equals(userId)) {
+            return Uni.createFrom().failure(new NotFoundException(ACCOUNT_NOT_FOUND_MESSAGE));
+        }
+        Long id = UserAccount.parseAccountId(key);
+        return accountRepo.findByUserAndId(user, id)
+            .onItem().ifNull().failWith(new NotFoundException(ACCOUNT_NOT_FOUND_MESSAGE))
+            .onItem().ifNotNull().transformToUni(userAccount -> {
+                userAccount.setName(account.getName());
+                // todo: if current balance != new balance, add transaction to adjust
+                return accountRepo.save(userAccount);
+            });
     }
 }

@@ -17,6 +17,7 @@ import io.smallrye.graphql.client.core.*;
 import io.smallrye.graphql.client.dynamic.api.DynamicGraphQLClient;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
@@ -41,6 +42,8 @@ public class UserAccountResourceTests {
     @Inject
     DataGenerator dataGen;
 
+    private UserEntity user;
+
     @BeforeEach
     void setUp() {
         Mockito
@@ -53,7 +56,7 @@ public class UserAccountResourceTests {
         Mockito
             .when(authMechanism.sendChallenge(Mockito.any()))
             .thenReturn(Uni.createFrom().item(true));
-        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
+        user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         user.setId(1L);
         var identity = QuarkusSecurityIdentity.builder().setPrincipal(user).build();
         Mockito
@@ -96,6 +99,67 @@ public class UserAccountResourceTests {
         assertEquals(account.getBalance(), accountData.getBalance());
 
         Mockito.verify(accountService).addAccount(Mockito.any(), Mockito.any());
+        Mockito.verifyNoMoreInteractions(accountService);
+    }
+
+    @Test
+    public void whenFindUserAccounts_Then_ShouldGetUserAccounts() {
+        var itemsCount = dataGen.genRandomNumber(5, 10);
+        List<UserAccountDTO> items = new ArrayList<>(itemsCount);
+        for (int i = 0; i < itemsCount; i++) {
+            var account = new UserAccount(dataGen.genProductName());
+            Mockito
+                .when(accountService.addAccount(Mockito.any(), Mockito.any()))
+                .thenReturn(Uni.createFrom().item(account));
+
+            var query = Document.document(
+                Operation.operation(
+                    OperationType.MUTATION,
+                    Field.field("addUserAccount",
+                        List.of(
+                            Argument.arg("account", InputObject.inputObject(
+                                InputObjectField.prop("name", account.getName()),
+                                InputObjectField.prop("balance", account.getBalance())
+                            ))
+                        ),
+                        Field.field("name"),
+                        Field.field("balance")
+                    )
+                )
+            );
+            var response = gqlClient.executeAsync(query)
+                .subscribe().withSubscriber(UniAssertSubscriber.create())
+                .awaitItem(TestConstants.UNI_DURATION)
+                .getItem();
+            items.add(response.getObject(UserAccountDTO.class, "addUserAccount"));
+        }
+
+        Mockito
+            .when(accountService.getAccounts(user))
+            .thenReturn(Uni.createFrom().item(items));
+
+        var query = Document.document(
+            Operation.operation(
+                Field.field("userAccounts",
+                    Field.field("name"),
+                    Field.field("balance")
+                )
+            )
+        );
+        var subscriber = gqlClient.executeAsync(query)
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var response = subscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertTrue(response.hasData());
+
+        var list = response.getList(UserAccountDTO.class, "userAccounts");
+        assertEquals(itemsCount, list.size());
+        items.forEach(item -> assertTrue(list.contains(item)));
+
+        Mockito.verify(accountService, Mockito.times(itemsCount)).addAccount(Mockito.any(), Mockito.any());
+        Mockito.verify(accountService).getAccounts(Mockito.any());
         Mockito.verifyNoMoreInteractions(accountService);
     }
 }

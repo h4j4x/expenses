@@ -20,14 +20,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 public class UserServiceTests {
-    private UserService userService;
-
     @InjectMock
     UserRepository userRepo;
-
     @Inject
     DataGenerator dataGen;
-
+    private UserService userService;
     private UserEntity user;
 
     @BeforeEach

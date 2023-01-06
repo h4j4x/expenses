@@ -151,9 +151,7 @@ public class UserAccountRepositoryTests {
             .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertEquals(itemsCount, list.size());
-        for (UserAccount item : items) {
-            assertTrue(list.contains(item));
-        }
+        items.forEach(item -> assertTrue(list.contains(item)));
     }
 
     @Test

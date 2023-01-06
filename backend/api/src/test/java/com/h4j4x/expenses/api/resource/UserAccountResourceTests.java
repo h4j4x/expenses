@@ -2,7 +2,6 @@ package com.h4j4x.expenses.api.resource;
 
 import com.h4j4x.expenses.api.DataGenerator;
 import com.h4j4x.expenses.api.TestConstants;
-import com.h4j4x.expenses.api.client.UserAccountResourceClient;
 import com.h4j4x.expenses.api.domain.UserAccount;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.UserAccountDTO;
@@ -13,15 +12,19 @@ import io.quarkus.security.runtime.QuarkusSecurityIdentity;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.quarkus.vertx.http.runtime.security.HttpCredentialTransport;
+import io.smallrye.graphql.client.GraphQLClient;
+import io.smallrye.graphql.client.core.*;
+import io.smallrye.graphql.client.dynamic.api.DynamicGraphQLClient;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import java.util.Collections;
+import java.util.List;
 import javax.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 public class UserAccountResourceTests {
@@ -32,7 +35,8 @@ public class UserAccountResourceTests {
     UserAccountService accountService;
 
     @Inject
-    UserAccountResourceClient accountClient;
+    @GraphQLClient("graphql")
+    DynamicGraphQLClient gqlClient;
 
     @Inject
     DataGenerator dataGen;
@@ -64,16 +68,32 @@ public class UserAccountResourceTests {
             .when(accountService.addAccount(Mockito.any(), Mockito.any()))
             .thenReturn(Uni.createFrom().item(account));
 
-        var uni = accountClient.addUserAccount(new UserAccountDTO(account.getName()));
-        var subscriber = uni
+        var query = Document.document(
+            Operation.operation(
+                OperationType.MUTATION,
+                Field.field("addUserAccount",
+                    List.of(
+                        Argument.arg("account", InputObject.inputObject(
+                            InputObjectField.prop("name", account.getName()),
+                            InputObjectField.prop("balance", account.getBalance())
+                        ))
+                    ),
+                    Field.field("name"),
+                    Field.field("balance")
+                )
+            )
+        );
+        var subscriber = gqlClient.executeAsync(query)
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
-        var userAccount = subscriber
+        var response = subscriber
             .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
-        assertNotNull(userAccount);
-        assertEquals(account.getName(), userAccount.getName());
-        assertEquals(account.getBalance(), userAccount.getBalance());
+        assertTrue(response.hasData());
+
+        var accountData = response.getObject(UserAccountDTO.class, "addUserAccount");
+        assertEquals(account.getName(), accountData.getName());
+        assertEquals(account.getBalance(), accountData.getBalance());
 
         Mockito.verify(accountService).addAccount(Mockito.any(), Mockito.any());
         Mockito.verifyNoMoreInteractions(accountService);

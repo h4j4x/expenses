@@ -33,11 +33,12 @@ public class UserAccountResource {
     @Query
     @Description("Get user accounts")
     public Uni<List<UserAccountDTO>> getUserAccounts() {
-        return accounts(authEntity());
+        return accounts(authEntity()); // todo: test
     }
 
+    @Query
     public Uni<List<UserAccountDTO>> accounts(@Source UserEntity user) {
-        return accountService.getAccounts(user);
+        return accountService.getAccounts(user); // todo: test
     }
 
     private UserEntity authEntity() {

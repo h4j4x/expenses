@@ -57,7 +57,7 @@ public class UserResourceTests {
             .when(jwtAuth.sendChallenge(Mockito.any()))
             .thenReturn(Uni.createFrom().item(true));
         user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
-        user.setId(1L);
+        user.setId(dataGen.genRandomLong());
         Mockito
             .when(userService.findUserByEmail(user.getName()))
             .thenReturn(Uni.createFrom().item(user));

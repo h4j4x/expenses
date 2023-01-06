@@ -1,5 +1,6 @@
 package com.h4j4x.expenses.api.domain;
 
+import com.h4j4x.expenses.common.util.KeyHandler;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import javax.persistence.*;
@@ -12,6 +13,8 @@ import javax.validation.constraints.NotNull;
     @UniqueConstraint(name = "uk_account_name", columnNames = {"user_id", "name"})
 })
 public class UserAccount {
+    private static final String KEY = "-UA-";
+
     @Id
     @GeneratedValue
     private Long id;
@@ -42,6 +45,14 @@ public class UserAccount {
     public UserAccount(UserEntity user, String name) {
         this.user = user;
         this.name = name;
+    }
+
+    public static Long parseUserId(String key) {
+        return new KeyHandler(KEY).parsePrefix(key);
+    }
+
+    public static Long parseAccountId(String key) {
+        return new KeyHandler(KEY).parseSuffix(key);
     }
 
     public Long getId() {
@@ -96,5 +107,12 @@ public class UserAccount {
     @Override
     public int hashCode() {
         return Objects.hash(id, name);
+    }
+
+    public String getKey() {
+        if (user != null && id != null) {
+            return new KeyHandler(KEY).createKey(user.getId(), id);
+        }
+        return null;
     }
 }

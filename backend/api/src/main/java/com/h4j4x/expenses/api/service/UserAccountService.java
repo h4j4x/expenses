@@ -37,9 +37,7 @@ public class UserAccountService {
         return accountRepo.save(userAccount);
     }
 
-    public Uni<List<UserAccountDTO>> getAccounts(UserEntity user) {
-        return accountRepo.findAllByUser(user)
-            .map(userAccounts -> userAccounts.stream()
-                .map(UserAccountDTO::fromAccount).toList());
+    public Uni<List<UserAccount>> getAccounts(UserEntity user) {
+        return accountRepo.findAllByUser(user);
     }
 }

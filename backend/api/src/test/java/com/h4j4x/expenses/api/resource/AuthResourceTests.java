@@ -34,7 +34,7 @@ public class AuthResourceTests {
     @BeforeEach
     void setUp() {
         user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
-        user.setId(1L);
+        user.setId(dataGen.genRandomLong());
         Mockito
             .when(userService.findUserByEmail(user.getEmail()))
             .thenReturn(Uni.createFrom().item(user));
@@ -64,7 +64,7 @@ public class AuthResourceTests {
     public void whenPostSignUp_WithOtherEmail_Then_ShouldGetJwtToken() {
         var user = new UserDTO(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         var userEntity = new UserEntity(user.getName(), user.getEmail(), user.getPassword());
-        userEntity.setId(2L);
+        userEntity.setId(dataGen.genRandomLong());
         Mockito
             .when(userService.createUser(user))
             .thenReturn(Uni.createFrom().item(userEntity));

@@ -33,7 +33,7 @@ public class UserAccountServiceTests {
     void whenCreateAccount_WithRepeatedName_Then_ShouldThrowBadRequest() {
         var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         var account = new UserAccount(user, dataGen.genProductName());
-        account.setId(1L);
+        account.setId(dataGen.genRandomLong());
         Mockito
             .when(accountRepo.countByUserAndName(user, account.getName()))
             .thenReturn(Uni.createFrom().item(1L));
@@ -54,7 +54,7 @@ public class UserAccountServiceTests {
     void whenCreateAccount_Then_ShouldCreateUserAccount() {
         var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         var account = new UserAccount(user, dataGen.genProductName());
-        account.setId(1L);
+        account.setId(dataGen.genRandomLong());
         Mockito
             .when(accountRepo.countByUserAndName(user, account.getName()))
             .thenReturn(Uni.createFrom().item(0L));
@@ -70,6 +70,7 @@ public class UserAccountServiceTests {
             .awaitItem(TestConstants.UNI_DURATION)
             .getItem();
         assertNotNull(userAccount);
+        assertEquals(account.getKey(), userAccount.getKey());
         assertEquals(account.getName(), userAccount.getName());
 
         Mockito.verify(accountRepo).countByUserAndName(user, account.getName());
@@ -80,11 +81,12 @@ public class UserAccountServiceTests {
     @Test
     void whenCreateAccounts_Then_ShouldGetUserAccounts() {
         var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
+        user.setId(dataGen.genRandomLong());
         var itemsCount = dataGen.genRandomNumber(5, 10);
         List<UserAccount> items = new ArrayList<>(itemsCount);
         for (int i = 0; i < itemsCount; i++) {
             var account = new UserAccount(user, dataGen.genProductName());
-            account.setId(i + 1L);
+            account.setId(dataGen.genRandomLong());
             Mockito
                 .when(accountRepo.countByUserAndName(user, account.getName()))
                 .thenReturn(Uni.createFrom().item(0L));
@@ -110,9 +112,7 @@ public class UserAccountServiceTests {
             .getItem();
         assertNotNull(list);
         assertEquals(itemsCount, list.size());
-        items.stream()
-            .map(UserAccountDTO::fromAccount)
-            .forEach(item -> assertTrue(list.contains(item)));
+        items.forEach(item -> assertTrue(list.contains(item)));
 
         Mockito.verify(accountRepo, Mockito.times(itemsCount)).countByUserAndName(Mockito.any(), Mockito.any());
         Mockito.verify(accountRepo, Mockito.times(itemsCount)).save(Mockito.any());

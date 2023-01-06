@@ -35,4 +35,8 @@ public class DataGenerator {
     public int genRandomNumber(int min, int max) {
         return faker.number().numberBetween(min, max);
     }
+
+    public Long genRandomLong() {
+        return Math.abs(faker.random().nextLong());
+    }
 }

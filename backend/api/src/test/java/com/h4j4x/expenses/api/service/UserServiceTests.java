@@ -30,7 +30,7 @@ public class UserServiceTests {
     @BeforeEach
     void setUp() {
         user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
-        user.setId(1L);
+        user.setId(dataGen.genRandomLong());
         Mockito
             .when(userRepo.findByEmail(user.getEmail()))
             .thenReturn(Uni.createFrom().item(user));
@@ -129,7 +129,7 @@ public class UserServiceTests {
     @Test
     void whenEditUser_WithoutPassword_Then_ShouldEditUserEntityAndKeepPassword() {
         var user = new UserEntity(dataGen.genUserName(), "other-" + dataGen.genUserEmail(), dataGen.genUserPassword());
-        user.setId(10L);
+        user.setId(dataGen.genRandomLong());
         var edited = new UserEntity(user.getName(), "another-" + dataGen.genUserEmail(), dataGen.genUserPassword());
         edited.setId(user.getId());
         Mockito
@@ -159,7 +159,7 @@ public class UserServiceTests {
     @Test
     void whenEditUser_WithExistentEmail_Then_ShouldThrow400() {
         var user = new UserEntity(dataGen.genUserName(), "other-" + dataGen.genUserEmail(), dataGen.genUserPassword());
-        user.setId(10L);
+        user.setId(dataGen.genRandomLong());
         var newEmail = "another-" + dataGen.genUserEmail();
         Mockito
             .when(userRepo.countByEmailAndNotId(newEmail, user.getId()))

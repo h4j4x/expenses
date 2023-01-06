@@ -4,6 +4,7 @@ import com.h4j4x.expenses.api.domain.UserAccount;
 import java.util.Objects;
 
 public class UserAccountDTO {
+    private String key;
     private String name;
 
     private double balance;
@@ -22,9 +23,19 @@ public class UserAccountDTO {
 
     public static UserAccountDTO fromAccount(UserAccount userAccount) {
         if (userAccount != null) {
-            return new UserAccountDTO(userAccount.getName(), userAccount.getBalance());
+            UserAccountDTO dto = new UserAccountDTO(userAccount.getName(), userAccount.getBalance());
+            dto.setKey(userAccount.getKey());
+            return dto;
         }
         return null;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public String getName() {
@@ -48,11 +59,12 @@ public class UserAccountDTO {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UserAccountDTO that = (UserAccountDTO) o;
+        if (Objects.equals(key, that.key)) return true;
         return name.equals(that.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(key, name);
     }
 }

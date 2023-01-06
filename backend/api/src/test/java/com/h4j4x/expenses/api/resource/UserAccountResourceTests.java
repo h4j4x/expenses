@@ -17,15 +17,15 @@ import io.smallrye.graphql.client.core.*;
 import io.smallrye.graphql.client.dynamic.api.DynamicGraphQLClient;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 public class UserAccountResourceTests {
@@ -57,7 +57,7 @@ public class UserAccountResourceTests {
             .when(authMechanism.sendChallenge(Mockito.any()))
             .thenReturn(Uni.createFrom().item(true));
         user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
-        user.setId(1L);
+        user.setId(dataGen.genRandomLong());
         var identity = QuarkusSecurityIdentity.builder().setPrincipal(user).build();
         Mockito
             .when(authMechanism.authenticate(Mockito.any(), Mockito.any()))
@@ -66,7 +66,8 @@ public class UserAccountResourceTests {
 
     @Test
     public void whenCreateAccount_Then_ShouldGetCreatedAccount() {
-        var account = new UserAccount(dataGen.genProductName());
+        var account = new UserAccount(user, dataGen.genProductName());
+        account.setId(dataGen.genRandomLong());
         Mockito
             .when(accountService.addAccount(Mockito.any(), Mockito.any()))
             .thenReturn(Uni.createFrom().item(account));
@@ -81,6 +82,7 @@ public class UserAccountResourceTests {
                             InputObjectField.prop("balance", account.getBalance())
                         ))
                     ),
+                    Field.field("key"),
                     Field.field("name"),
                     Field.field("balance")
                 )
@@ -95,6 +97,8 @@ public class UserAccountResourceTests {
         assertTrue(response.hasData());
 
         var accountData = response.getObject(UserAccountDTO.class, "addUserAccount");
+        assertNotNull(accountData);
+        assertEquals(account.getKey(), accountData.getKey());
         assertEquals(account.getName(), accountData.getName());
         assertEquals(account.getBalance(), accountData.getBalance());
 
@@ -105,42 +109,20 @@ public class UserAccountResourceTests {
     @Test
     public void whenFindUserAccounts_Then_ShouldGetUserAccounts() {
         var itemsCount = dataGen.genRandomNumber(5, 10);
-        List<UserAccountDTO> items = new ArrayList<>(itemsCount);
+        Map<Long, UserAccount> items = new HashMap<>();
         for (int i = 0; i < itemsCount; i++) {
-            var account = new UserAccount(dataGen.genProductName());
-            Mockito
-                .when(accountService.addAccount(Mockito.any(), Mockito.any()))
-                .thenReturn(Uni.createFrom().item(account));
-
-            var query = Document.document(
-                Operation.operation(
-                    OperationType.MUTATION,
-                    Field.field("addUserAccount",
-                        List.of(
-                            Argument.arg("account", InputObject.inputObject(
-                                InputObjectField.prop("name", account.getName()),
-                                InputObjectField.prop("balance", account.getBalance())
-                            ))
-                        ),
-                        Field.field("name"),
-                        Field.field("balance")
-                    )
-                )
-            );
-            var response = gqlClient.executeAsync(query)
-                .subscribe().withSubscriber(UniAssertSubscriber.create())
-                .awaitItem(TestConstants.UNI_DURATION)
-                .getItem();
-            items.add(response.getObject(UserAccountDTO.class, "addUserAccount"));
+            var account = new UserAccount(user, dataGen.genProductName());
+            account.setId(dataGen.genRandomLong());
+            items.put(account.getId(), account);
         }
-
         Mockito
             .when(accountService.getAccounts(user))
-            .thenReturn(Uni.createFrom().item(items));
+            .thenReturn(Uni.createFrom().item(items.values().stream().toList()));
 
         var query = Document.document(
             Operation.operation(
                 Field.field("userAccounts",
+                    Field.field("key"),
                     Field.field("name"),
                     Field.field("balance")
                 )
@@ -156,9 +138,17 @@ public class UserAccountResourceTests {
 
         var list = response.getList(UserAccountDTO.class, "userAccounts");
         assertEquals(itemsCount, list.size());
-        items.forEach(item -> assertTrue(list.contains(item)));
+        list.forEach(account -> {
+            Long userId = UserAccount.parseUserId(account.getKey());
+            assertEquals(user.getId(), userId);
+            Long accountId = UserAccount.parseAccountId(account.getKey());
+            UserAccount userAccount = items.get(accountId);
+            assertNotNull(userAccount);
+            assertEquals(userAccount.getKey(), account.getKey());
+            assertEquals(userAccount.getName(), account.getName());
+            assertEquals(userAccount.getBalance(), account.getBalance());
+        });
 
-        Mockito.verify(accountService, Mockito.times(itemsCount)).addAccount(Mockito.any(), Mockito.any());
         Mockito.verify(accountService).getAccounts(Mockito.any());
         Mockito.verifyNoMoreInteractions(accountService);
     }

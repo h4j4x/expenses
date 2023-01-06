@@ -36,7 +36,9 @@ public class UserAccountResource {
     @Query
     @Description("Get user accounts")
     public Uni<List<UserAccountDTO>> getUserAccounts() {
-        return accountService.getAccounts(authEntity());
+        return accountService.getAccounts(authEntity())
+            .map(userAccounts -> userAccounts.stream()
+                .map(UserAccountDTO::fromAccount).toList());
     }
 
     private UserEntity authEntity() {

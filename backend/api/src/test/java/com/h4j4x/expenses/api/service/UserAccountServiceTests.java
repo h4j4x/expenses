@@ -12,8 +12,10 @@ import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import static org.junit.jupiter.api.Assertions.*;
@@ -79,24 +81,14 @@ public class UserAccountServiceTests {
     }
 
     @Test
-    void whenCreateAccounts_Then_ShouldGetUserAccounts() {
+    void whenGetAccounts_Then_ShouldGetUserAccounts() {
         var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         user.setId(dataGen.genRandomLong());
         var itemsCount = dataGen.genRandomNumber(5, 10);
         List<UserAccount> items = new ArrayList<>(itemsCount);
         for (int i = 0; i < itemsCount; i++) {
-            var account = new UserAccount(user, dataGen.genProductName());
-            account.setId(dataGen.genRandomLong());
-            Mockito
-                .when(accountRepo.countByUserAndName(user, account.getName()))
-                .thenReturn(Uni.createFrom().item(0L));
-            Mockito
-                .when(accountRepo.save(account))
-                .thenReturn(Uni.createFrom().item(account));
-            var item = accountService.addAccount(user, new UserAccountDTO(account.getName()))
-                .subscribe().withSubscriber(UniAssertSubscriber.create())
-                .awaitItem(TestConstants.UNI_DURATION)
-                .getItem();
+            var item = new UserAccount(user, dataGen.genProductName());
+            item.setId(dataGen.genRandomLong());
             items.add(item);
         }
         Mockito
@@ -114,9 +106,109 @@ public class UserAccountServiceTests {
         assertEquals(itemsCount, list.size());
         items.forEach(item -> assertTrue(list.contains(item)));
 
-        Mockito.verify(accountRepo, Mockito.times(itemsCount)).countByUserAndName(Mockito.any(), Mockito.any());
-        Mockito.verify(accountRepo, Mockito.times(itemsCount)).save(Mockito.any());
         Mockito.verify(accountRepo).findAllByUser(user);
+        Mockito.verifyNoMoreInteractions(accountRepo);
+    }
+
+    @Test
+    void whenEditAccount_WithInvalidUser_Then_ShouldThrow404() {
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
+        user.setId(dataGen.genRandomLong());
+        var otherUser = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
+        otherUser.setId(dataGen.genRandomLong());
+        var account = new UserAccount(otherUser, dataGen.genProductName());
+        account.setId(dataGen.genRandomLong());
+
+        var uni = accountService.editAccount(user, account.getKey(), new UserAccountDTO(dataGen.genProductName()));
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        subscriber
+            .awaitFailure(TestConstants.UNI_DURATION)
+            .assertFailedWith(NotFoundException.class, UserAccountService.ACCOUNT_NOT_FOUND_MESSAGE);
+        Mockito.verifyNoMoreInteractions(accountRepo);
+    }
+
+    @Test
+    void whenEditAccount_WithInvalidAccount_Then_ShouldThrow404() {
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
+        user.setId(dataGen.genRandomLong());
+        var account = new UserAccount(user, dataGen.genProductName());
+        account.setId(dataGen.genRandomLong());
+        Mockito
+            .when(accountRepo.findByUserAndId(user, account.getId()))
+            .thenReturn(Uni.createFrom().optional(Optional.empty()));
+
+        var uni = accountService.editAccount(user, account.getKey(), new UserAccountDTO(dataGen.genProductName()));
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        subscriber
+            .awaitFailure(TestConstants.UNI_DURATION)
+            .assertFailedWith(NotFoundException.class, UserAccountService.ACCOUNT_NOT_FOUND_MESSAGE);
+        Mockito.verify(accountRepo).findByUserAndId(user, account.getId());
+        Mockito.verifyNoMoreInteractions(accountRepo);
+    }
+
+    @Test
+    void whenEditAccount_WithExistentName_Then_ShouldThrow400() {
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
+        user.setId(dataGen.genRandomLong());
+        var account = new UserAccount(user, dataGen.genProductName());
+        account.setId(dataGen.genRandomLong());
+        UserAccountDTO accountDTO = new UserAccountDTO(dataGen.genProductName());
+        Mockito
+            .when(accountRepo.findByUserAndId(user, account.getId()))
+            .thenReturn(Uni.createFrom().item(account));
+        Mockito
+            .when(accountRepo.countByUserAndNameAndNotId(user, accountDTO.getName(), account.getId()))
+            .thenReturn(Uni.createFrom().item(1L));
+
+        var uni = accountService.editAccount(user, account.getKey(), accountDTO);
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        subscriber
+            .awaitFailure(TestConstants.UNI_DURATION)
+            .assertFailedWith(BadRequestException.class, UserAccountService.ACCOUNT_NAME_EXISTS_MESSAGE);
+        Mockito.verify(accountRepo).findByUserAndId(user, account.getId());
+        Mockito.verify(accountRepo).countByUserAndNameAndNotId(user, accountDTO.getName(), account.getId());
+        Mockito.verifyNoMoreInteractions(accountRepo);
+    }
+
+    @Test
+    void whenEditAccount_WithNewName_Then_ShouldEditUserAccount() {
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
+        user.setId(dataGen.genRandomLong());
+        var account = new UserAccount(user, dataGen.genProductName());
+        account.setId(dataGen.genRandomLong());
+        var edited = new UserAccount(user, dataGen.genProductName());
+        edited.setId(account.getId());
+        Mockito
+            .when(accountRepo.findByUserAndId(user, account.getId()))
+            .thenReturn(Uni.createFrom().item(account));
+        Mockito
+            .when(accountRepo.countByUserAndNameAndNotId(user, edited.getName(), account.getId()))
+            .thenReturn(Uni.createFrom().item(0L));
+        Mockito
+            .when(accountRepo.save(edited))
+            .thenReturn(Uni.createFrom().item(edited));
+
+        var uni = accountService.editAccount(user, account.getKey(), UserAccountDTO.fromAccount(edited));
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var userAccount = subscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertNotNull(userAccount);
+        assertEquals(edited.getKey(), userAccount.getKey());
+        assertEquals(edited.getName(), userAccount.getName());
+        assertEquals(edited.getBalance(), userAccount.getBalance());
+
+        Mockito.verify(accountRepo).findByUserAndId(user, account.getId());
+        Mockito.verify(accountRepo).countByUserAndNameAndNotId(user, edited.getName(), account.getId());
+        Mockito.verify(accountRepo).save(edited);
         Mockito.verifyNoMoreInteractions(accountRepo);
     }
 }

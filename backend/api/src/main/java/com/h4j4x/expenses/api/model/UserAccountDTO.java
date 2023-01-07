@@ -21,10 +21,10 @@ public class UserAccountDTO {
         this.balance = balance;
     }
 
-    public static UserAccountDTO fromAccount(UserAccount userAccount) {
-        if (userAccount != null) {
-            UserAccountDTO dto = new UserAccountDTO(userAccount.getName(), userAccount.getBalance());
-            dto.setKey(userAccount.getKey());
+    public static UserAccountDTO fromAccount(UserAccount account) {
+        if (account != null) {
+            UserAccountDTO dto = new UserAccountDTO(account.getName(), account.getBalance());
+            dto.setKey(account.getKey());
             return dto;
         }
         return null;

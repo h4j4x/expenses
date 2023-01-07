@@ -43,7 +43,6 @@ public class UserAccountService {
         return accountRepo.findAllByUser(user);
     }
 
-    // todo: test
     public Uni<UserAccount> editAccount(UserEntity user, String key, UserAccountDTO account) {
         Long userId = UserAccount.parseUserId(key);
         if (!user.getId().equals(userId)) {
@@ -52,6 +51,15 @@ public class UserAccountService {
         Long id = UserAccount.parseAccountId(key);
         return accountRepo.findByUserAndId(user, id)
             .onItem().ifNull().failWith(new NotFoundException(ACCOUNT_NOT_FOUND_MESSAGE))
+            .onItem().ifNotNull().call(userAccount -> accountRepo
+                .countByUserAndNameAndNotId(user, account.getName(), userAccount.getId())
+                .onItem().transform(count -> {
+                    if (count > 0) {
+                        return null;
+                    }
+                    return count;
+                })
+                .onItem().ifNull().failWith(new BadRequestException(ACCOUNT_NAME_EXISTS_MESSAGE)))
             .onItem().ifNotNull().transformToUni(userAccount -> {
                 userAccount.setName(account.getName());
                 // todo: if current balance != new balance, add transaction to adjust

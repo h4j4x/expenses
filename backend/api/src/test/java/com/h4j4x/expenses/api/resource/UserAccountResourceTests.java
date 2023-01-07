@@ -152,4 +152,49 @@ public class UserAccountResourceTests {
         Mockito.verify(accountService).getAccounts(Mockito.any());
         Mockito.verifyNoMoreInteractions(accountService);
     }
+
+    @Test
+    public void whenEditUserAccount_WithNewName_Then_ShouldGetUpdatedUserAccount() {
+        var account = new UserAccount(user, dataGen.genProductName());
+        account.setId(dataGen.genRandomLong());
+        var edited = new UserAccount(user, dataGen.genProductName());
+        edited.setId(account.getId());
+        UserAccountDTO accountDTO = new UserAccountDTO(edited.getName());
+        Mockito
+            .when(accountService.editAccount(user, account.getKey(), accountDTO))
+            .thenReturn(Uni.createFrom().item(edited));
+
+        var query = Document.document(
+            Operation.operation(
+                OperationType.MUTATION,
+                Field.field("editUserAccount",
+                    List.of(
+                        Argument.arg("key", account.getKey()),
+                        Argument.arg("account", InputObject.inputObject(
+                            InputObjectField.prop("name", edited.getName()),
+                            InputObjectField.prop("balance", edited.getBalance())
+                        ))
+                    ),
+                    Field.field("key"),
+                    Field.field("name"),
+                    Field.field("balance")
+                )
+            )
+        );
+        var subscriber = gqlClient.executeAsync(query)
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var response = subscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertTrue(response.hasData());
+
+        var userAccount = response.getObject(UserAccountDTO.class, "editUserAccount");
+        assertEquals(edited.getKey(), userAccount.getKey());
+        assertEquals(edited.getName(), userAccount.getName());
+        assertEquals(edited.getBalance(), userAccount.getBalance());
+
+        Mockito.verify(accountService).editAccount(user, account.getKey(), accountDTO);
+        Mockito.verifyNoMoreInteractions(accountService);
+    }
 }

@@ -41,7 +41,6 @@ public class UserAccountResource {
                 .map(UserAccountDTO::fromAccount).toList());
     }
 
-    // todo: test
     @Mutation
     @Description("Edit user account")
     public Uni<UserAccountDTO> editUserAccount(String key, UserAccountDTO account) {

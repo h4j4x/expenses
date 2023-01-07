@@ -121,7 +121,7 @@ public class UserResourceTests {
     }
 
     @Test
-    public void whenMutateUser_WithoutPassword_Then_ShouldGetUpdatedUserData() {
+    public void whenEditUser_WithoutPassword_Then_ShouldGetUpdatedUserData() {
         var userDTO = new UserDTO(dataGen.genUserName(), dataGen.genUserEmail(), null);
         var updatedEntity = new UserEntity(userDTO.getName(), userDTO.getEmail(), user.getPassword());
         Mockito

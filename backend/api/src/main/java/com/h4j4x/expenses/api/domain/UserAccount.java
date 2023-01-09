@@ -1,5 +1,6 @@
 package com.h4j4x.expenses.api.domain;
 
+import com.h4j4x.expenses.api.model.AccountType;
 import com.h4j4x.expenses.common.util.KeyHandler;
 import java.time.OffsetDateTime;
 import java.util.Objects;
@@ -10,7 +11,7 @@ import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "user_accounts", uniqueConstraints = {
-    @UniqueConstraint(name = "uk_account_name", columnNames = {"user_id", "name"})
+    @UniqueConstraint(name = "uk_user_account_name", columnNames = {"user_id", "name"})
 })
 public class UserAccount {
     private static final String KEY = "-UA-";
@@ -28,23 +29,41 @@ public class UserAccount {
     @Column(nullable = false)
     private String name;
 
-    @Min(0)
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "Account type is required")
+    @Column(name = "account_type", nullable = false)
+    private AccountType accountType;
+
+    @NotBlank(message = "Account currency may not be blank")
+    @Column(nullable = false)
+    private String currency;
+
+    @Min(value = 0, message = "Account balance cannot be negative")
     @Column(nullable = false, precision = 7, scale = 2)
     private double balance = .0;
 
+    @NotNull(message = "Account balance updated at is required")
     @Column(name = "balance_updated_at")
     private OffsetDateTime balanceUpdatedAt;
 
     public UserAccount() {
+        balanceUpdatedAt = OffsetDateTime.now();
     }
 
     public UserAccount(String name) {
+        this();
         this.name = name;
     }
 
     public UserAccount(UserEntity user, String name) {
+        this(name);
         this.user = user;
-        this.name = name;
+    }
+
+    public UserAccount(UserEntity user, String name, AccountType accountType, String currency) {
+        this(user, name);
+        this.accountType = accountType;
+        this.currency = currency;
     }
 
     public static Long parseUserId(String key) {
@@ -79,12 +98,28 @@ public class UserAccount {
         this.name = name;
     }
 
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
     public double getBalance() {
         return balance;
     }
 
     public void setBalance(double balance) {
         this.balance = balance;
+    }
+
+    public AccountType getAccountType() {
+        return accountType;
+    }
+
+    public void setAccountType(AccountType accountType) {
+        this.accountType = accountType;
     }
 
     public OffsetDateTime getBalanceUpdatedAt() {

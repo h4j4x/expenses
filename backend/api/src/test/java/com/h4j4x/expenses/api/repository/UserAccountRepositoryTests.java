@@ -4,6 +4,7 @@ import com.h4j4x.expenses.api.DataGenerator;
 import com.h4j4x.expenses.api.TestConstants;
 import com.h4j4x.expenses.api.domain.UserAccount;
 import com.h4j4x.expenses.api.domain.UserEntity;
+import com.h4j4x.expenses.api.model.AccountType;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public class UserAccountRepositoryTests {
     @Test
     void whenCreateAccount_Then_ShouldAssignId() {
         var user = createUser();
-        var account = new UserAccount(user, dataGen.genProductName());
+        var account = new UserAccount(user, dataGen.genProductName(), AccountType.MONEY, "usd");
         var uni = accountRepo.save(account);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -67,7 +68,7 @@ public class UserAccountRepositoryTests {
     @Test
     void whenFindAccount_ByUserAndName_Then_ShouldGetUserAccount() {
         var user = createUser();
-        var account = new UserAccount(user, dataGen.genProductName());
+        var account = new UserAccount(user, dataGen.genProductName(), AccountType.MONEY, "usd");
         var uni = accountRepo.save(account);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -90,7 +91,7 @@ public class UserAccountRepositoryTests {
     @Test
     void whenFindAccount_ByUserAndId_Then_ShouldGetUserAccount() {
         var user = createUser();
-        var account = new UserAccount(user, dataGen.genProductName());
+        var account = new UserAccount(user, dataGen.genProductName(), AccountType.MONEY, "usd");
         var uni = accountRepo.save(account);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -114,7 +115,7 @@ public class UserAccountRepositoryTests {
     @Test
     void whenFindAccount_ByUserAndInvalidName_Then_ShouldGetNothing() {
         var user = createUser();
-        var account = new UserAccount(user, dataGen.genProductName());
+        var account = new UserAccount(user, dataGen.genProductName(), AccountType.MONEY, "usd");
         var uni = accountRepo.save(account);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -137,7 +138,7 @@ public class UserAccountRepositoryTests {
         var user = createUser();
         var itemsCount = dataGen.genRandomNumber(1, 5);
         for (int i = 0; i < itemsCount; i++) {
-            var account = new UserAccount(user, dataGen.genProductName());
+            var account = new UserAccount(user, dataGen.genProductName(), AccountType.MONEY, "usd");
             accountRepo.save(account)
                 .subscribe().withSubscriber(UniAssertSubscriber.create())
                 .awaitItem(TestConstants.UNI_DURATION);
@@ -159,7 +160,7 @@ public class UserAccountRepositoryTests {
         var itemsCount = dataGen.genRandomNumber(5, 10);
         List<UserAccount> items = new ArrayList<>(itemsCount);
         for (int i = 0; i < itemsCount; i++) {
-            var account = new UserAccount(user, dataGen.genProductName());
+            var account = new UserAccount(user, dataGen.genProductName(), AccountType.MONEY, "usd");
             var item = accountRepo.save(account)
                 .subscribe().withSubscriber(UniAssertSubscriber.create())
                 .awaitItem(TestConstants.UNI_DURATION)
@@ -181,7 +182,7 @@ public class UserAccountRepositoryTests {
     @Test
     void whenCountAccounts_ByUserAndNameAndSameId_Then_ShouldGetNothing() {
         var user = createUser();
-        var account = new UserAccount(user, dataGen.genProductName());
+        var account = new UserAccount(user, dataGen.genProductName(), AccountType.MONEY, "usd");
         var userAccount = accountRepo.save(account)
             .subscribe().withSubscriber(UniAssertSubscriber.create())
             .awaitItem(TestConstants.UNI_DURATION)
@@ -200,7 +201,7 @@ public class UserAccountRepositoryTests {
     @Test
     void whenCountAccounts_ByUserAndNameAndOtherId_Then_ShouldGetOne() {
         var user = createUser();
-        var account = new UserAccount(user, dataGen.genProductName());
+        var account = new UserAccount(user, dataGen.genProductName(), AccountType.MONEY, "usd");
         var userAccount = accountRepo.save(account)
             .subscribe().withSubscriber(UniAssertSubscriber.create())
             .awaitItem(TestConstants.UNI_DURATION)
@@ -219,7 +220,7 @@ public class UserAccountRepositoryTests {
     @Test
     void whenCountAccounts_ByUserAndName_Then_ShouldGetOne() {
         var user = createUser();
-        var account = new UserAccount(user, dataGen.genProductName());
+        var account = new UserAccount(user, dataGen.genProductName(), AccountType.MONEY, "usd");
         var userAccount = accountRepo.save(account)
             .subscribe().withSubscriber(UniAssertSubscriber.create())
             .awaitItem(TestConstants.UNI_DURATION)

@@ -29,9 +29,12 @@ public class AuthResource {
     static final String SIGN_UP = "sign-up";
     static final String SIGN_IN = "sign-in";
     static final String ME = "me";
+
     private final UserService userService;
+
     @ConfigProperty(name = "mp.jwt.verify.issuer")
     String jwtIssuer;
+
     @ConfigProperty(name = "app.auth.token-expiration-in-days", defaultValue = "30")
     Integer tokenExpirationInDays;
 

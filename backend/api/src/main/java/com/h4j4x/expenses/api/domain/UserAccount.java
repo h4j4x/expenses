@@ -11,7 +11,10 @@ import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "user_accounts", uniqueConstraints = {
-    @UniqueConstraint(name = "uk_user_account_name", columnNames = {"user_id", "name"})
+    @UniqueConstraint(name = "uk_user_account_name", columnNames = {"user_id", "name"}),
+}, indexes = {
+    @Index(name = "idx_account_type", columnList = "account_type"),
+    @Index(name = "idx_currency", columnList = "currency"),
 })
 public class UserAccount {
     private static final String KEY = "-UA-";
@@ -46,8 +49,13 @@ public class UserAccount {
     @Column(name = "balance_updated_at")
     private OffsetDateTime balanceUpdatedAt;
 
+    @NotNull(message = "Account created at is required")
+    @Column(name = "created_at")
+    private OffsetDateTime createdAt;
+
     public UserAccount() {
         balanceUpdatedAt = OffsetDateTime.now();
+        createdAt = OffsetDateTime.now();
     }
 
     public UserAccount(String name) {
@@ -128,6 +136,10 @@ public class UserAccount {
 
     public void setBalanceUpdatedAt(OffsetDateTime balanceUpdatedAt) {
         this.balanceUpdatedAt = balanceUpdatedAt;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
     }
 
     @Override

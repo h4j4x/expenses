@@ -1,10 +1,12 @@
 package com.h4j4x.expenses.api.domain;
 
 import java.security.Principal;
+import java.time.OffsetDateTime;
 import java.util.Objects;
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 @Entity
@@ -30,10 +32,16 @@ public class UserEntity implements Principal {
     @Column(length = 100)
     private String salt;
 
+    @NotNull(message = "User created at is required")
+    @Column(name = "created_at")
+    private OffsetDateTime createdAt;
+
     public UserEntity() {
+        createdAt = OffsetDateTime.now();
     }
 
     public UserEntity(String name, String email, String password) {
+        this();
         this.name = name;
         this.email = email;
         this.password = password;
@@ -78,6 +86,10 @@ public class UserEntity implements Principal {
 
     public void setSalt(String salt) {
         this.salt = salt;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
     }
 
     @Override

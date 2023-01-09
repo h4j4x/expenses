@@ -1,8 +1,7 @@
 package com.h4j4x.expenses.common.util;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class StringUtilsTests {
     @Test
@@ -13,5 +12,14 @@ public class StringUtilsTests {
         assertEquals("second", StringUtils.firstNotBlank(null, null, "second"));
         assertEquals("first", StringUtils.firstNotBlank(" ", "first", "second"));
         assertEquals("second", StringUtils.firstNotBlank("", " ", "second"));
+    }
+
+    @Test
+    public void testIsNotBlank() {
+        assertFalse(StringUtils.isNotBlank(null));
+        assertFalse(StringUtils.isNotBlank(""));
+        assertFalse(StringUtils.isNotBlank(" "));
+        assertFalse(StringUtils.isNotBlank("    "));
+        assertTrue(StringUtils.isNotBlank("a"));
     }
 }

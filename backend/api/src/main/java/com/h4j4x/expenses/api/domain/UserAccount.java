@@ -5,7 +5,6 @@ import com.h4j4x.expenses.common.util.KeyHandler;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import javax.persistence.*;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
@@ -41,7 +40,6 @@ public class UserAccount {
     @Column(nullable = false)
     private String currency;
 
-    @Min(value = 0, message = "Account balance cannot be negative")
     @Column(nullable = false, precision = 7, scale = 2)
     private double balance = .0;
 

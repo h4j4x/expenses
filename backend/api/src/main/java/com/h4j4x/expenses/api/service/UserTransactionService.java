@@ -25,7 +25,6 @@ public class UserTransactionService {
         this.transactionRepo = transactionRepo;
     }
 
-    // todo test
     public Uni<UserTransaction> addTransaction(UserAccount account, UserTransactionDTO transaction) {
         var userAccount = new UserTransaction(account, transaction.getNotes(), transaction.getAmount());
         userAccount.setCreationWay(ObjectUtils.firstNotNull(transaction.getCreationWay(), defaultTransactionCreationWay));

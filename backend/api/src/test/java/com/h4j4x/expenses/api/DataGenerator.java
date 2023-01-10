@@ -43,4 +43,8 @@ public class DataGenerator {
     public double getRandomDouble() {
         return Math.abs(faker.random().nextDouble());
     }
+
+    public String getRandomNotes(int minCount, int maxCount) {
+        return faker.lorem().characters(minCount, maxCount);
+    }
 }

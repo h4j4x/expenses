@@ -9,6 +9,14 @@ public class UserTransactionDTO {
 
     private TransactionStatus status;
 
+    public UserTransactionDTO() {
+    }
+
+    public UserTransactionDTO(String notes, double amount) {
+        this.notes = notes;
+        this.amount = amount;
+    }
+
     public double getAmount() {
         return amount;
     }

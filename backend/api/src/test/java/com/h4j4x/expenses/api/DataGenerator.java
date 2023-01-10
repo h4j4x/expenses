@@ -39,4 +39,8 @@ public class DataGenerator {
     public Long genRandomLong() {
         return Math.abs(faker.random().nextLong());
     }
+
+    public double getRandomDouble() {
+        return Math.abs(faker.random().nextDouble());
+    }
 }

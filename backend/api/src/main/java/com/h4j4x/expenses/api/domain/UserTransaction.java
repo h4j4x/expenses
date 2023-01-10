@@ -57,8 +57,6 @@ public class UserTransaction {
     private OffsetDateTime createdAt;
 
     public UserTransaction() {
-        creationWay = TransactionCreationWay.MANUAL;
-        status = TransactionStatus.PENDING;
         createdAt = OffsetDateTime.now();
     }
 
@@ -70,9 +68,15 @@ public class UserTransaction {
         }
     }
 
-    public UserTransaction(UserAccount account, String notes) {
+    public UserTransaction(UserAccount account, String notes, double amount) {
         this(account);
         this.notes = notes;
+        this.amount = amount;
+    }
+
+    public UserTransaction(String notes, double amount) {
+        this.notes = notes;
+        this.amount = amount;
     }
 
     public static Long parseAccountId(String key) {

@@ -13,7 +13,7 @@ public class UserAccountDTO {
 
     private String currency;
 
-    private double balance;
+    private Double balance;
 
     private LocalDateTime balanceUpdatedAt;
 
@@ -71,11 +71,15 @@ public class UserAccountDTO {
         this.currency = currency;
     }
 
-    public double getBalance() {
+    public Double getBalance() {
         return balance;
     }
 
-    public void setBalance(double balance) {
+    public double getBalanceDoubleValue() {
+        return balance != null ? balance : .0;
+    }
+
+    public void setBalance(Double balance) {
         this.balance = balance;
     }
 

@@ -3,6 +3,7 @@ package com.h4j4x.expenses.api.service;
 import com.h4j4x.expenses.api.domain.UserAccount;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.model.AccountType;
+import com.h4j4x.expenses.api.model.PageData;
 import com.h4j4x.expenses.api.model.UserAccountDTO;
 import com.h4j4x.expenses.api.repository.UserAccountRepository;
 import com.h4j4x.expenses.common.util.ObjectUtils;
@@ -55,6 +56,11 @@ public class UserAccountService {
 
     public Uni<List<UserAccount>> getAccounts(UserEntity user) {
         return accountRepo.findAllByUser(user);
+    }
+
+    // todo: test
+    public Uni<PageData<UserAccount>> getAccountsPaged(UserEntity user, Integer pageIndex, Integer pageSize) {
+        return accountRepo.findPageByUser(user, pageIndex, pageSize);
     }
 
     public Uni<UserAccount> editAccount(UserEntity user, String key, UserAccountDTO account) {

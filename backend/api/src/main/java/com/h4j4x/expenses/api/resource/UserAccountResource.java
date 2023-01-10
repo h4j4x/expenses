@@ -1,16 +1,14 @@
 package com.h4j4x.expenses.api.resource;
 
 import com.h4j4x.expenses.api.domain.UserEntity;
+import com.h4j4x.expenses.api.model.PageData;
 import com.h4j4x.expenses.api.model.UserAccountDTO;
 import com.h4j4x.expenses.api.service.UserAccountService;
 import io.quarkus.hibernate.reactive.panache.common.runtime.ReactiveTransactional;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.mutiny.Uni;
 import java.util.List;
-import org.eclipse.microprofile.graphql.Description;
-import org.eclipse.microprofile.graphql.GraphQLApi;
-import org.eclipse.microprofile.graphql.Mutation;
-import org.eclipse.microprofile.graphql.Query;
+import org.eclipse.microprofile.graphql.*;
 
 @GraphQLApi
 @ReactiveTransactional
@@ -39,6 +37,15 @@ public class UserAccountResource {
         return accountService.getAccounts(authEntity())
             .map(userAccounts -> userAccounts.stream()
                 .map(UserAccountDTO::fromAccount).toList());
+    }
+
+    // todo: test
+    @Query
+    @Description("Get user accounts paged")
+    public Uni<PageData<UserAccountDTO>> getUserPageAccounts(@DefaultValue("0") int pageIndex,
+                                                             @DefaultValue("10") int pageSize) {
+        return accountService.getAccountsPaged(authEntity(), pageIndex, pageSize)
+            .map(page -> page.map(UserAccountDTO::fromAccount));
     }
 
     @Mutation

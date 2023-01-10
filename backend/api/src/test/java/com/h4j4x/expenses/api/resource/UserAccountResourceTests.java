@@ -100,7 +100,7 @@ public class UserAccountResourceTests {
         assertNotNull(accountData);
         assertEquals(account.getKey(), accountData.getKey());
         assertEquals(account.getName(), accountData.getName());
-        assertEquals(account.getBalance(), accountData.getBalance());
+        assertEquals(account.getBalance(), accountData.getBalanceDoubleValue());
 
         Mockito.verify(accountService).addAccount(Mockito.any(), Mockito.any());
         Mockito.verifyNoMoreInteractions(accountService);
@@ -146,7 +146,7 @@ public class UserAccountResourceTests {
             assertNotNull(userAccount);
             assertEquals(userAccount.getKey(), account.getKey());
             assertEquals(userAccount.getName(), account.getName());
-            assertEquals(userAccount.getBalance(), account.getBalance());
+            assertEquals(userAccount.getBalance(), account.getBalanceDoubleValue());
         });
 
         Mockito.verify(accountService).getAccounts(Mockito.any());
@@ -192,7 +192,7 @@ public class UserAccountResourceTests {
         var userAccount = response.getObject(UserAccountDTO.class, "editUserAccount");
         assertEquals(edited.getKey(), userAccount.getKey());
         assertEquals(edited.getName(), userAccount.getName());
-        assertEquals(edited.getBalance(), userAccount.getBalance());
+        assertEquals(edited.getBalance(), userAccount.getBalanceDoubleValue());
 
         Mockito.verify(accountService).editAccount(user, account.getKey(), accountDTO);
         Mockito.verifyNoMoreInteractions(accountService);

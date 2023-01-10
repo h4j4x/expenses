@@ -2,6 +2,7 @@ package com.h4j4x.expenses.api.repository;
 
 import com.h4j4x.expenses.api.domain.UserAccount;
 import com.h4j4x.expenses.api.domain.UserEntity;
+import com.h4j4x.expenses.api.model.PageData;
 import io.smallrye.mutiny.Uni;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +48,17 @@ public class UserAccountRepository extends BaseRepository<UserAccount> {
             return find("user_id", user.getId()).list();
         }
         return Uni.createFrom().item(Collections.emptyList());
+    }
+
+    // todo: test
+    public Uni<PageData<UserAccount>> findPageByUser(UserEntity user, int pageIndex, int pageSize) {
+        if (user != null) {
+            var query = find("user_id", user.getId());
+            return Uni.combine()
+                .all().unis(query.page(pageIndex, pageSize).list(), query.count()).asTuple()
+                .onItem().transform(tuple -> new PageData<>(tuple.getItem1(), pageIndex, pageSize, tuple.getItem2()));
+        }
+        return Uni.createFrom().item(PageData.empty());
     }
 
     public Uni<Long> countByUserAndName(UserEntity user, String name) {

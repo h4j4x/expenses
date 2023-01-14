@@ -50,7 +50,6 @@ public class UserAccountRepository extends BaseRepository<UserAccount> {
         return Uni.createFrom().item(Collections.emptyList());
     }
 
-    // todo: test
     public Uni<PageData<UserAccount>> findPageByUser(UserEntity user, int pageIndex, int pageSize) {
         if (user != null) {
             var query = find("user_id", user.getId());

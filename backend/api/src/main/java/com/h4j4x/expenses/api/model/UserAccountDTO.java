@@ -75,12 +75,12 @@ public class UserAccountDTO {
         return balance;
     }
 
-    public double getBalanceDoubleValue() {
-        return balance != null ? balance : .0;
-    }
-
     public void setBalance(Double balance) {
         this.balance = balance;
+    }
+
+    public double getBalanceDoubleValue() {
+        return balance != null ? balance : .0;
     }
 
     public LocalDateTime getBalanceUpdatedAt() {

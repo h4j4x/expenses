@@ -143,6 +143,9 @@ public class UserAccountRepositoryTests {
                 .subscribe().withSubscriber(UniAssertSubscriber.create())
                 .awaitItem(TestConstants.UNI_DURATION);
         }
+        accountRepo.flush()
+            .subscribe().withSubscriber(UniAssertSubscriber.create())
+            .awaitItem(TestConstants.UNI_DURATION);
 
         var countUni = accountRepo.countByUser(user);
         var countSubscriber = countUni
@@ -155,7 +158,7 @@ public class UserAccountRepositoryTests {
     }
 
     @Test
-    void whenFindAccounts_ByUser_Then_ShouldGetData() {
+    void whenFindAllAccounts_ByUser_Then_ShouldGetData() {
         var user = createUser();
         var itemsCount = dataGen.genRandomNumber(5, 10);
         List<UserAccount> items = new ArrayList<>(itemsCount);
@@ -167,6 +170,9 @@ public class UserAccountRepositoryTests {
                 .getItem();
             items.add(item);
         }
+        accountRepo.flush()
+            .subscribe().withSubscriber(UniAssertSubscriber.create())
+            .awaitItem(TestConstants.UNI_DURATION);
 
         var findUni = accountRepo.findAllByUser(user);
         var findSubscriber = findUni
@@ -177,6 +183,39 @@ public class UserAccountRepositoryTests {
             .getItem();
         assertEquals(itemsCount, list.size());
         items.forEach(item -> assertTrue(list.contains(item)));
+    }
+
+    @Test
+    void whenFindPagedAccounts_ByUser_Then_ShouldGetPageData() {
+        var user = createUser();
+        var itemsCount = dataGen.genRandomNumber(5, 10);
+        List<UserAccount> items = new ArrayList<>(itemsCount);
+        for (int i = 0; i < itemsCount; i++) {
+            var account = new UserAccount(user, dataGen.genProductName(), AccountType.MONEY, "usd");
+            var item = accountRepo.save(account)
+                .subscribe().withSubscriber(UniAssertSubscriber.create())
+                .awaitItem(TestConstants.UNI_DURATION)
+                .getItem();
+            items.add(item);
+        }
+        accountRepo.flush()
+            .subscribe().withSubscriber(UniAssertSubscriber.create())
+            .awaitItem(TestConstants.UNI_DURATION);
+
+        var pageIndex = 0;
+        var pageSize = 2;
+        var findUni = accountRepo.findPageByUser(user, pageIndex, pageSize);
+        var findSubscriber = findUni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var page = findSubscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertEquals(pageIndex, page.pageIndex());
+        assertEquals(pageSize, page.pageSize());
+        assertEquals(itemsCount, page.totalCount());
+        assertEquals(pageSize, page.list().size());
+        page.list().forEach(item -> assertTrue(items.contains(item)));
     }
 
     @Test

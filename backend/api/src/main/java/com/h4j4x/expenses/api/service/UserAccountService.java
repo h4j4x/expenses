@@ -58,7 +58,6 @@ public class UserAccountService {
         return accountRepo.findAllByUser(user);
     }
 
-    // todo: test
     public Uni<PageData<UserAccount>> getAccountsPaged(UserEntity user, Integer pageIndex, Integer pageSize) {
         return accountRepo.findPageByUser(user, pageIndex, pageSize);
     }

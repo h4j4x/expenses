@@ -55,7 +55,7 @@ public class UserAccountRepository extends BaseRepository<UserAccount> {
             var query = find("user_id", user.getId());
             return Uni.combine()
                 .all().unis(query.page(pageIndex, pageSize).list(), query.count()).asTuple()
-                .onItem().transform(tuple -> new PageData<>(tuple.getItem1(), pageIndex, pageSize, tuple.getItem2()));
+                .onItem().transform(tuple -> PageData.create(tuple.getItem1(), pageIndex, pageSize, tuple.getItem2()));
         }
         return Uni.createFrom().item(PageData.empty());
     }

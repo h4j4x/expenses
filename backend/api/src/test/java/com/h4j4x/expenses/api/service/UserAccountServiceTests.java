@@ -4,6 +4,7 @@ import com.h4j4x.expenses.api.DataGenerator;
 import com.h4j4x.expenses.api.TestConstants;
 import com.h4j4x.expenses.api.domain.UserAccount;
 import com.h4j4x.expenses.api.domain.UserEntity;
+import com.h4j4x.expenses.api.model.PageData;
 import com.h4j4x.expenses.api.model.UserAccountDTO;
 import com.h4j4x.expenses.api.repository.UserAccountRepository;
 import io.quarkus.test.junit.QuarkusTest;
@@ -107,6 +108,42 @@ public class UserAccountServiceTests {
         items.forEach(item -> assertTrue(list.contains(item)));
 
         Mockito.verify(accountRepo).findAllByUser(user);
+        Mockito.verifyNoMoreInteractions(accountRepo);
+    }
+
+    @Test
+    void whenGetPagedAccounts_Then_ShouldGetUserPagedAccounts() {
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
+        user.setId(dataGen.genRandomLong());
+        var itemsCount = dataGen.genRandomNumber(5, 10);
+        List<UserAccount> items = new ArrayList<>(itemsCount);
+        for (int i = 0; i < itemsCount; i++) {
+            var item = new UserAccount(user, dataGen.genProductName());
+            item.setId(dataGen.genRandomLong());
+            items.add(item);
+        }
+        var pageIndex = 0;
+        var pageSize = 2;
+        Mockito
+            .when(accountRepo.findPageByUser(user, pageIndex, pageSize))
+            .thenReturn(Uni.createFrom()
+                .item(PageData.create(items.subList(pageIndex, pageSize), pageIndex, pageSize, itemsCount)));
+
+        var uni = accountService.getAccountsPaged(user, pageIndex, pageSize);
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var page = subscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertNotNull(page);
+        assertEquals(pageIndex, page.pageIndex());
+        assertEquals(pageSize, page.pageSize());
+        assertEquals(itemsCount, page.totalCount());
+        assertEquals(pageSize, page.list().size());
+        page.list().forEach(item -> assertTrue(items.contains(item)));
+
+        Mockito.verify(accountRepo).findPageByUser(user, pageIndex, pageSize);
         Mockito.verifyNoMoreInteractions(accountRepo);
     }
 

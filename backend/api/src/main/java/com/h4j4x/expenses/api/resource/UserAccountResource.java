@@ -39,7 +39,6 @@ public class UserAccountResource {
                 .map(UserAccountDTO::fromAccount).toList());
     }
 
-    // todo: test
     @Query
     @Description("Get user accounts paged")
     public Uni<PageData<UserAccountDTO>> getUserPageAccounts(@DefaultValue("0") int pageIndex,

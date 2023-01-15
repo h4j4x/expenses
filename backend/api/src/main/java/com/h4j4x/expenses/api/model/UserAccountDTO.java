@@ -21,7 +21,13 @@ public class UserAccountDTO {
     }
 
     public UserAccountDTO(String name) {
+        this();
         this.name = name;
+    }
+
+    public UserAccountDTO(String name, double balance) {
+        this(name);
+        this.balance = balance;
     }
 
     public static UserAccountDTO fromAccount(UserAccount account) {

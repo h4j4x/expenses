@@ -66,6 +66,11 @@ public class UserAccount {
         this.user = user;
     }
 
+    public UserAccount(UserEntity user, String name, double balance) {
+        this(user, name);
+        this.balance = balance;
+    }
+
     public UserAccount(UserEntity user, String name, AccountType accountType, String currency) {
         this(user, name);
         this.accountType = accountType;

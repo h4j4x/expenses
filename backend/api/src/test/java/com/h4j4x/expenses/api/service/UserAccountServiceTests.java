@@ -4,9 +4,11 @@ import com.h4j4x.expenses.api.DataGenerator;
 import com.h4j4x.expenses.api.TestConstants;
 import com.h4j4x.expenses.api.domain.UserAccount;
 import com.h4j4x.expenses.api.domain.UserEntity;
+import com.h4j4x.expenses.api.domain.UserTransaction;
 import com.h4j4x.expenses.api.model.PageData;
 import com.h4j4x.expenses.api.model.UserAccountDTO;
 import com.h4j4x.expenses.api.repository.UserAccountRepository;
+import com.h4j4x.expenses.api.repository.UserTransactionRepository;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.smallrye.mutiny.Uni;
@@ -25,6 +27,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class UserAccountServiceTests {
     @InjectMock
     UserAccountRepository accountRepo;
+
+    @InjectMock
+    UserTransactionRepository transactionRepo;
 
     @Inject
     UserAccountService accountService;
@@ -79,6 +84,44 @@ public class UserAccountServiceTests {
         Mockito.verify(accountRepo).countByUserAndName(user, account.getName());
         Mockito.verify(accountRepo).save(Mockito.any());
         Mockito.verifyNoMoreInteractions(accountRepo);
+    }
+
+    @Test
+    void whenCreateAccount_WithBalance_Then_ShouldCreateUserAccountAndInitialTransaction() {
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
+        var account = new UserAccount(user, dataGen.genProductName());
+        account.setId(dataGen.genRandomLong());
+        Mockito
+            .when(accountRepo.countByUserAndName(user, account.getName()))
+            .thenReturn(Uni.createFrom().item(0L));
+        Mockito
+            .when(accountRepo.save(Mockito.any()))
+            .thenReturn(Uni.createFrom().item(account));
+
+        var transaction = new UserTransaction(
+            account, UserAccountService.TRANSACTION_INITIAL_BALANCE_NOTES, dataGen.getRandomDouble());
+        transaction.setId(dataGen.genRandomLong());
+        Mockito
+            .when(transactionRepo.save(Mockito.any()))
+            .thenReturn(Uni.createFrom().item(transaction));
+
+        var uni = accountService.addAccount(user, new UserAccountDTO(account.getName(), transaction.getAmount()));
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var userAccount = subscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertNotNull(userAccount);
+        assertEquals(account.getKey(), userAccount.getKey());
+        assertEquals(account.getName(), userAccount.getName());
+        assertEquals(account.getBalance(), userAccount.getBalance());
+
+        Mockito.verify(accountRepo).countByUserAndName(user, account.getName());
+        Mockito.verify(accountRepo).save(account);
+        Mockito.verifyNoMoreInteractions(accountRepo);
+        Mockito.verify(transactionRepo).save(transaction);
+        Mockito.verifyNoMoreInteractions(transactionRepo);
     }
 
     @Test
@@ -247,5 +290,50 @@ public class UserAccountServiceTests {
         Mockito.verify(accountRepo).countByUserAndNameAndNotId(user, edited.getName(), account.getId());
         Mockito.verify(accountRepo).save(edited);
         Mockito.verifyNoMoreInteractions(accountRepo);
+    }
+
+    @Test
+    void whenEditAccount_WithNewBalance_Then_ShouldEditUserAccountAndCreateTransaction() {
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
+        user.setId(dataGen.genRandomLong());
+        var account = new UserAccount(user, dataGen.genProductName());
+        account.setId(dataGen.genRandomLong());
+        var edited = new UserAccount(user, dataGen.genProductName(), dataGen.getRandomDouble());
+        edited.setId(account.getId());
+        Mockito
+            .when(accountRepo.findByUserAndId(user, account.getId()))
+            .thenReturn(Uni.createFrom().item(account));
+        Mockito
+            .when(accountRepo.countByUserAndNameAndNotId(user, edited.getName(), account.getId()))
+            .thenReturn(Uni.createFrom().item(0L));
+        Mockito
+            .when(accountRepo.save(edited))
+            .thenReturn(Uni.createFrom().item(edited));
+
+        var transaction = new UserTransaction(
+            account, UserAccountService.TRANSACTION_ADJUSTED_BALANCE_NOTES, edited.getBalance());
+        transaction.setId(dataGen.genRandomLong());
+        Mockito
+            .when(transactionRepo.save(Mockito.any()))
+            .thenReturn(Uni.createFrom().item(transaction));
+
+        var uni = accountService.editAccount(user, account.getKey(), UserAccountDTO.fromAccount(edited));
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var userAccount = subscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertNotNull(userAccount);
+        assertEquals(edited.getKey(), userAccount.getKey());
+        assertEquals(edited.getName(), userAccount.getName());
+        assertEquals(edited.getBalance(), userAccount.getBalance());
+
+        Mockito.verify(accountRepo).findByUserAndId(user, account.getId());
+        Mockito.verify(accountRepo).countByUserAndNameAndNotId(user, edited.getName(), account.getId());
+        Mockito.verify(accountRepo).save(edited);
+        Mockito.verifyNoMoreInteractions(accountRepo);
+        Mockito.verify(transactionRepo).save(transaction);
+        Mockito.verifyNoMoreInteractions(transactionRepo);
     }
 }

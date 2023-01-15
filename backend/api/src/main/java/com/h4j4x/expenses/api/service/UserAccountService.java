@@ -18,6 +18,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 public class UserAccountService {
     public static final String ACCOUNT_NAME_EXISTS_MESSAGE = "Account name already registered";
     public static final String ACCOUNT_NOT_FOUND_MESSAGE = "Account not found";
+    public static final String TRANSACTION_INITIAL_BALANCE_NOTES = "Initial balance";
+    public static final String TRANSACTION_ADJUSTED_BALANCE_NOTES = "Adjusted balance";
 
     private final UserAccountRepository accountRepo;
 
@@ -54,10 +56,9 @@ public class UserAccountService {
         return accountRepo.save(userAccount)
             .onItem().invoke(savedAccount -> {
                 if (account.getBalanceDoubleValue() != 0) {
-                    var transaction = new UserTransactionDTO("Initial balance", account.getBalance());
+                    var transaction = new UserTransactionDTO(TRANSACTION_INITIAL_BALANCE_NOTES, account.getBalance());
                     transaction.setCreationWay(TransactionCreationWay.SYSTEM);
                     transaction.setStatus(TransactionStatus.CONFIRMED);
-                    // todo: test
                     transactionService.addTransaction(savedAccount, transaction);
                 }
             });
@@ -97,10 +98,9 @@ public class UserAccountService {
                 return accountRepo.save(userAccount)
                     .onItem().invoke(savedAccount -> {
                         if (account.getBalanceDoubleValue() != 0) {
-                            var transaction = new UserTransactionDTO("Adjusted balance", account.getBalance());
+                            var transaction = new UserTransactionDTO(TRANSACTION_ADJUSTED_BALANCE_NOTES, account.getBalance());
                             transaction.setCreationWay(TransactionCreationWay.SYSTEM);
                             transaction.setStatus(TransactionStatus.ADJUST_PENDING);
-                            // todo: test
                             transactionService.addTransaction(savedAccount, transaction);
                         }
                     });

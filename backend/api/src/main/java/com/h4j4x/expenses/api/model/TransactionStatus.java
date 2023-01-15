@@ -4,4 +4,5 @@ public enum TransactionStatus {
     PENDING,
     CONFIRMED,
     REFUNDED,
+    ADJUST_PENDING,
 }

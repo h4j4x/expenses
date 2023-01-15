@@ -2,9 +2,7 @@ package com.h4j4x.expenses.api.service;
 
 import com.h4j4x.expenses.api.domain.UserAccount;
 import com.h4j4x.expenses.api.domain.UserEntity;
-import com.h4j4x.expenses.api.model.AccountType;
-import com.h4j4x.expenses.api.model.PageData;
-import com.h4j4x.expenses.api.model.UserAccountDTO;
+import com.h4j4x.expenses.api.model.*;
 import com.h4j4x.expenses.api.repository.UserAccountRepository;
 import com.h4j4x.expenses.common.util.ObjectUtils;
 import com.h4j4x.expenses.common.util.StringUtils;
@@ -23,14 +21,17 @@ public class UserAccountService {
 
     private final UserAccountRepository accountRepo;
 
+    private final UserTransactionService transactionService;
+
     @ConfigProperty(name = "app.account.default-type", defaultValue = "MONEY")
     AccountType defaultAccountType;
 
     @ConfigProperty(name = "app.account.default-currency", defaultValue = "usd")
     String defaultCurrency;
 
-    public UserAccountService(UserAccountRepository accountRepo) {
+    public UserAccountService(UserAccountRepository accountRepo, UserTransactionService transactionService) {
         this.accountRepo = accountRepo;
+        this.transactionService = transactionService;
     }
 
     public Uni<UserAccount> addAccount(UserEntity user, UserAccountDTO account) {
@@ -50,8 +51,16 @@ public class UserAccountService {
         userAccount.setAccountType(ObjectUtils.firstNotNull(account.getAccountType(), defaultAccountType));
         userAccount.setCurrency(StringUtils.firstNotBlank(account.getCurrency(), defaultCurrency));
         userAccount.setBalanceUpdatedAt(OffsetDateTime.now());
-        // todo: if balance > 0, add transaction
-        return accountRepo.save(userAccount);
+        return accountRepo.save(userAccount)
+            .onItem().invoke(savedAccount -> {
+                if (account.getBalanceDoubleValue() != 0) {
+                    var transaction = new UserTransactionDTO("Initial balance", account.getBalance());
+                    transaction.setCreationWay(TransactionCreationWay.SYSTEM);
+                    transaction.setStatus(TransactionStatus.CONFIRMED);
+                    // todo: test
+                    transactionService.addTransaction(savedAccount, transaction);
+                }
+            });
     }
 
     public Uni<List<UserAccount>> getAccounts(UserEntity user) {
@@ -85,8 +94,16 @@ public class UserAccountService {
                     .firstNotNull(account.getAccountType(), userAccount.getAccountType()));
                 userAccount.setCurrency(StringUtils
                     .firstNotBlank(account.getCurrency(), userAccount.getCurrency()));
-                // todo: if current balance != new balance, add transaction to adjust
-                return accountRepo.save(userAccount);
+                return accountRepo.save(userAccount)
+                    .onItem().invoke(savedAccount -> {
+                        if (account.getBalanceDoubleValue() != 0) {
+                            var transaction = new UserTransactionDTO("Adjusted balance", account.getBalance());
+                            transaction.setCreationWay(TransactionCreationWay.SYSTEM);
+                            transaction.setStatus(TransactionStatus.ADJUST_PENDING);
+                            // todo: test
+                            transactionService.addTransaction(savedAccount, transaction);
+                        }
+                    });
             });
     }
 }

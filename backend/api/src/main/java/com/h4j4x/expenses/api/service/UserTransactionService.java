@@ -26,9 +26,12 @@ public class UserTransactionService {
     }
 
     public Uni<UserTransaction> addTransaction(UserAccount account, UserTransactionDTO transaction) {
-        var userAccount = new UserTransaction(account, transaction.getNotes(), transaction.getAmount());
-        userAccount.setCreationWay(ObjectUtils.firstNotNull(transaction.getCreationWay(), defaultTransactionCreationWay));
-        userAccount.setStatus(ObjectUtils.firstNotNull(transaction.getStatus(), defaultTransactionStatus));
-        return transactionRepo.save(userAccount);
+        var userTransaction = new UserTransaction(account, transaction.getNotes(), transaction.getAmount());
+        userTransaction.setCreationWay(ObjectUtils.firstNotNull(transaction.getCreationWay(), defaultTransactionCreationWay));
+        userTransaction.setStatus(ObjectUtils.firstNotNull(transaction.getStatus(), defaultTransactionStatus));
+        return transactionRepo.save(userTransaction)
+            .onItem().invoke(savedTransaction -> {
+                // todo: notify queue to update account balance
+            });
     }
 }

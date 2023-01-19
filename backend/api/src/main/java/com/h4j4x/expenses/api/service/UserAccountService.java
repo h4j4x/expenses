@@ -2,17 +2,22 @@ package com.h4j4x.expenses.api.service;
 
 import com.h4j4x.expenses.api.domain.UserAccount;
 import com.h4j4x.expenses.api.domain.UserEntity;
+import com.h4j4x.expenses.api.domain.UserTransaction;
 import com.h4j4x.expenses.api.model.*;
 import com.h4j4x.expenses.api.repository.UserAccountRepository;
+import com.h4j4x.expenses.common.util.NumberUtils;
 import com.h4j4x.expenses.common.util.ObjectUtils;
 import com.h4j4x.expenses.common.util.StringUtils;
 import io.smallrye.mutiny.Uni;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 @ApplicationScoped
 public class UserAccountService {
@@ -105,5 +110,28 @@ public class UserAccountService {
                         }
                     });
             });
+    }
+
+    @Incoming("user-account-transactions-in") // todo: test
+    @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
+    public void updateAccountBalance(String accountId) {
+        Uni.createFrom().item(NumberUtils.parseLong(accountId))
+            .onItem().ifNotNull().transformToUni(id -> accountRepo.findById(id))
+            .onItem().ifNotNull().invoke(this::updateAccountBalance)
+            .await().indefinitely();
+    }
+
+    // todo: test
+    public void updateAccountBalance(UserAccount account) {
+        transactionService
+            .findTransactions(account, account.getBalanceUpdatedAt(), TransactionStatus.CONFIRMED)
+            .collect()
+            .with(Collectors.summingDouble(UserTransaction::getAmount))
+            .onItem().transformToUni(balance -> {
+                account.setBalance(balance);
+                account.setBalanceUpdatedAt(OffsetDateTime.now());
+                return accountRepo.save(account);
+            })
+            .await().indefinitely();
     }
 }

@@ -1,6 +1,27 @@
+plugins {
+    id "jacoco"
+}
+
 dependencies {
     testImplementation "com.github.javafaker:javafaker:${javaFakerVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
 
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+}
+
+test {
+    finalizedBy jacocoTestReport
+    jacoco {
+        excludeClassLoaders = ["*QuarkusClassLoader"]
+        destinationFile = layout.buildDirectory.file("jacoco-quarkus.exec").get().asFile
+    }
+    useJUnitPlatform()
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = false
+        csv.required = false
+    }
 }

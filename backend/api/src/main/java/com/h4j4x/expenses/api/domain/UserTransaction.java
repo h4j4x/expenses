@@ -43,7 +43,7 @@ public class UserTransaction {
     private String notes;
 
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "Transaction status is required")
+    @NotNull(message = "Transaction creation way is required")
     @Column(nullable = false)
     private TransactionCreationWay creationWay;
 
@@ -68,13 +68,14 @@ public class UserTransaction {
         }
     }
 
-    public UserTransaction(UserAccount account, String notes, double amount) {
-        this(account);
+    public UserTransaction(String notes, double amount) {
+        this();
         this.notes = notes;
         this.amount = amount;
     }
 
-    public UserTransaction(String notes, double amount) {
+    public UserTransaction(UserAccount account, String notes, double amount) {
+        this(account);
         this.notes = notes;
         this.amount = amount;
     }

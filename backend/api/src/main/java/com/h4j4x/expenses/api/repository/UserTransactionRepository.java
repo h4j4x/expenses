@@ -21,7 +21,6 @@ public class UserTransactionRepository extends BaseRepository<UserTransaction> {
         return super.save(transaction, validator);
     }
 
-    // todo: test
     public Multi<UserTransaction> findTransactions(UserAccount account,
                                                    OffsetDateTime from,
                                                    TransactionStatus status) {

@@ -40,11 +40,11 @@ public class DataGenerator {
         return Math.abs(faker.random().nextLong());
     }
 
-    public double getRandomDouble() {
+    public double genRandomDouble() {
         return Math.abs(faker.random().nextDouble());
     }
 
-    public String getRandomNotes(int minCount, int maxCount) {
+    public String genRandomNotes(int minCount, int maxCount) {
         return faker.lorem().characters(minCount, maxCount);
     }
 }

@@ -33,7 +33,7 @@ public class UserTransactionServiceTests {
         var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
         var account = new UserAccount(user, dataGen.genProductName());
         account.setId(dataGen.genRandomLong());
-        var transaction = new UserTransaction(account, dataGen.getRandomNotes(10, 200), dataGen.getRandomDouble());
+        var transaction = new UserTransaction(account, dataGen.genRandomNotes(10, 200), dataGen.genRandomDouble());
         transaction.setId(dataGen.genRandomLong());
         Mockito
             .when(transactionRepo.save(Mockito.any()))

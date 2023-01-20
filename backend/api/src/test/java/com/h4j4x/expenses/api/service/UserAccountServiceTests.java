@@ -99,7 +99,7 @@ public class UserAccountServiceTests {
             .thenReturn(Uni.createFrom().item(account));
 
         var transaction = new UserTransaction(
-            account, UserAccountService.TRANSACTION_INITIAL_BALANCE_NOTES, dataGen.getRandomDouble());
+            account, UserAccountService.TRANSACTION_INITIAL_BALANCE_NOTES, dataGen.genRandomDouble());
         transaction.setId(dataGen.genRandomLong());
         Mockito
             .when(transactionRepo.save(Mockito.any()))
@@ -298,7 +298,7 @@ public class UserAccountServiceTests {
         user.setId(dataGen.genRandomLong());
         var account = new UserAccount(user, dataGen.genProductName());
         account.setId(dataGen.genRandomLong());
-        var edited = new UserAccount(user, dataGen.genProductName(), dataGen.getRandomDouble());
+        var edited = new UserAccount(user, dataGen.genProductName(), dataGen.genRandomDouble());
         edited.setId(account.getId());
         Mockito
             .when(accountRepo.findByUserAndId(user, account.getId()))

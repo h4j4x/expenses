@@ -9,7 +9,11 @@ import com.h4j4x.expenses.api.model.AccountType;
 import com.h4j4x.expenses.api.model.TransactionCreationWay;
 import com.h4j4x.expenses.api.model.TransactionStatus;
 import io.quarkus.test.junit.QuarkusTest;
+import io.smallrye.mutiny.helpers.test.AssertSubscriber;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
@@ -44,7 +48,7 @@ public class UserTransactionRepositoryTests {
 
     @Test
     void whenCreateTransaction_WithoutAccount_Then_ShouldThrowError() {
-        var transaction = new UserTransaction(dataGen.genProductName(), dataGen.getRandomDouble());
+        var transaction = new UserTransaction(dataGen.genProductName(), dataGen.genRandomDouble());
         var uni = transactionRepo.save(transaction);
         var subscriber = uni
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -57,7 +61,7 @@ public class UserTransactionRepositoryTests {
     @Test
     void whenCreateTransaction_Then_ShouldAssignId() {
         var account = createAccount();
-        var transaction = new UserTransaction(account, dataGen.genProductName(), dataGen.getRandomDouble());
+        var transaction = new UserTransaction(account, dataGen.genProductName(), dataGen.genRandomDouble());
         transaction.setCreationWay(TransactionCreationWay.MANUAL);
         transaction.setStatus(TransactionStatus.CONFIRMED);
         var uni = transactionRepo.save(transaction);
@@ -71,6 +75,37 @@ public class UserTransactionRepositoryTests {
         assertNotNull(userTransaction.getId());
         assertEquals(transaction.getNotes(), userTransaction.getNotes());
         assertEquals(transaction.getAmount(), userTransaction.getAmount());
+    }
+
+    @Test
+    void whenFindTransactions_ByAccount_Then_ShouldGetStream() {
+        var account = createAccount();
+        var itemsCount = dataGen.genRandomNumber(5, 10);
+        List<UserTransaction> items = new ArrayList<>(itemsCount);
+        var status = TransactionStatus.CONFIRMED;
+        var from = OffsetDateTime.now();
+        var creationWay = TransactionCreationWay.SYSTEM;
+        for (int i = 0; i < itemsCount; i++) {
+            var transaction = new UserTransaction(account, dataGen.genRandomNotes(10, 200), dataGen.genRandomDouble());
+            transaction.setStatus(status);
+            transaction.setCreationWay(creationWay);
+            var item = transactionRepo.save(transaction)
+                .subscribe().withSubscriber(UniAssertSubscriber.create())
+                .awaitItem(TestConstants.UNI_DURATION)
+                .getItem();
+            items.add(item);
+        }
+        transactionRepo.flush()
+            .subscribe().withSubscriber(UniAssertSubscriber.create())
+            .awaitItem(TestConstants.UNI_DURATION);
+
+        var multi = transactionRepo.findTransactions(account, from, status);
+        var subscriber = multi.subscribe()
+            .withSubscriber(AssertSubscriber.create(itemsCount));
+
+        subscriber
+            .awaitCompletion()
+            .assertItems(items.toArray(new UserTransaction[0]));
     }
 
     private UserAccount createAccount() {

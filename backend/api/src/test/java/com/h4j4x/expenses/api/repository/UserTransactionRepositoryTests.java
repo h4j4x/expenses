@@ -78,7 +78,7 @@ public class UserTransactionRepositoryTests {
     }
 
     @Test
-    void whenFindTransactions_ByAccount_Then_ShouldGetStream() {
+    void whenFindAccountTransactions_Then_ShouldGetStream() {
         var account = createAccount();
         var itemsCount = dataGen.genRandomNumber(5, 10);
         List<UserTransaction> items = new ArrayList<>(itemsCount);
@@ -100,10 +100,8 @@ public class UserTransactionRepositoryTests {
             .awaitItem(TestConstants.UNI_DURATION);
 
         var multi = transactionRepo.findTransactions(account, from, status);
-        var subscriber = multi.subscribe()
-            .withSubscriber(AssertSubscriber.create(itemsCount));
-
-        subscriber
+        multi.subscribe()
+            .withSubscriber(AssertSubscriber.create(itemsCount))
             .awaitCompletion()
             .assertItems(items.toArray(new UserTransaction[0]));
     }

@@ -40,7 +40,6 @@ public class UserTransactionService {
             .onItem().invoke(savedTransaction -> eventEmitter.send(account.getId().toString()));
     }
 
-    // todo: test
     public Multi<UserTransaction> findTransactions(UserAccount account,
                                                    OffsetDateTime from,
                                                    TransactionStatus status) {

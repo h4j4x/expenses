@@ -99,7 +99,7 @@ public class UserTransactionRepositoryTests {
             .subscribe().withSubscriber(UniAssertSubscriber.create())
             .awaitItem(TestConstants.UNI_DURATION);
 
-        var multi = transactionRepo.findTransactions(account, from, status);
+        var multi = transactionRepo.findTransactionsFromDateWithStatus(account, from, status);
         multi.subscribe()
             .withSubscriber(AssertSubscriber.create(itemsCount))
             .awaitCompletion()

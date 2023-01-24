@@ -6,11 +6,13 @@ import com.h4j4x.expenses.api.domain.UserAccount;
 import com.h4j4x.expenses.api.domain.UserEntity;
 import com.h4j4x.expenses.api.domain.UserTransaction;
 import com.h4j4x.expenses.api.model.PageData;
+import com.h4j4x.expenses.api.model.TransactionStatus;
 import com.h4j4x.expenses.api.model.UserAccountDTO;
 import com.h4j4x.expenses.api.repository.UserAccountRepository;
 import com.h4j4x.expenses.api.repository.UserTransactionRepository;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
+import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
@@ -334,6 +337,52 @@ public class UserAccountServiceTests {
         Mockito.verify(accountRepo).save(edited);
         Mockito.verifyNoMoreInteractions(accountRepo);
         Mockito.verify(transactionRepo).save(transaction);
+        Mockito.verifyNoMoreInteractions(transactionRepo);
+    }
+
+    @Test
+    void whenUpdateAccountBalance_Then_ShouldEditUserAccountWithUpdatedBalance() {
+        var user = new UserEntity(dataGen.genUserName(), dataGen.genUserEmail(), dataGen.genUserPassword());
+        user.setId(dataGen.genRandomLong());
+        var account = new UserAccount(user, dataGen.genProductName());
+        account.setId(dataGen.genRandomLong());
+        var updatedAt = account.getBalanceUpdatedAt();
+        var accountBalance = dataGen.genRandomDouble();
+        Mockito
+            .when(accountRepo.save(Mockito.any()))
+            .thenAnswer((Answer<Uni<UserAccount>>) invocation
+                -> Uni.createFrom().item(invocation.getArgument(0, UserAccount.class)));
+
+        var transactionsCount = dataGen.genRandomNumber(2, 5);
+        var transactionAmount = accountBalance / transactionsCount;
+        var status = TransactionStatus.CONFIRMED;
+        List<UserTransaction> transactions = new ArrayList<>(transactionsCount);
+        for (int i = 0; i < transactionsCount; i++) {
+            var transaction = new UserTransaction(
+                account, dataGen.genRandomNotes(10, 20), transactionAmount);
+            transaction.setStatus(status);
+            transaction.setId(dataGen.genRandomLong());
+            transactions.add(transaction);
+        }
+        Mockito
+            .when(transactionRepo.findTransactionsFromDateWithStatus(account, updatedAt, status))
+            .thenReturn(Multi.createFrom().items(transactions.stream()));
+
+        var uni = accountService.updateAccountBalance(account);
+        var subscriber = uni
+            .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+        var userAccount = subscriber
+            .awaitItem(TestConstants.UNI_DURATION)
+            .getItem();
+        assertNotNull(userAccount);
+        assertEquals(account.getKey(), userAccount.getKey());
+        assertEquals(account.getName(), userAccount.getName());
+        assertEquals(accountBalance, userAccount.getBalance());
+
+        Mockito.verify(accountRepo).save(Mockito.any());
+        Mockito.verifyNoMoreInteractions(accountRepo);
+        Mockito.verify(transactionRepo).findTransactionsFromDateWithStatus(account, updatedAt, status);
         Mockito.verifyNoMoreInteractions(transactionRepo);
     }
 }

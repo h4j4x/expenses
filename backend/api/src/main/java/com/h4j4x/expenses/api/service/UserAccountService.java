@@ -78,11 +78,11 @@ public class UserAccountService {
     }
 
     public Uni<UserAccount> editAccount(UserEntity user, String key, UserAccountDTO account) {
-        Long userId = UserAccount.parseUserId(key);
+        var userId = UserAccount.parseUserId(key);
         if (!user.getId().equals(userId)) {
             return Uni.createFrom().failure(new NotFoundException(ACCOUNT_NOT_FOUND_MESSAGE));
         }
-        Long id = UserAccount.parseAccountId(key);
+        var id = UserAccount.parseAccountId(key);
         return accountRepo.findByUserAndId(user, id)
             .onItem().ifNull().failWith(new NotFoundException(ACCOUNT_NOT_FOUND_MESSAGE))
             .onItem().ifNotNull().call(userAccount -> accountRepo
@@ -117,21 +117,20 @@ public class UserAccountService {
     public void updateAccountBalance(String accountId) {
         Uni.createFrom().item(NumberUtils.parseLong(accountId))
             .onItem().ifNotNull().transformToUni(id -> accountRepo.findById(id))
-            .onItem().ifNotNull().invoke(this::updateAccountBalance)
+            .onItem().ifNotNull().transformToUni(this::updateAccountBalance)
             .await().indefinitely();
     }
 
-    // todo: test
-    public void updateAccountBalance(UserAccount account) {
-        transactionService
-            .findTransactions(account, account.getBalanceUpdatedAt(), TransactionStatus.CONFIRMED)
+    public Uni<UserAccount> updateAccountBalance(UserAccount account) {
+        var now = OffsetDateTime.now();
+        return transactionService
+            .findTransactionsFromDateWithStatus(account, account.getBalanceUpdatedAt(), TransactionStatus.CONFIRMED)
             .collect()
             .with(Collectors.summingDouble(UserTransaction::getAmount))
             .onItem().transformToUni(balance -> {
                 account.setBalance(balance);
-                account.setBalanceUpdatedAt(OffsetDateTime.now());
+                account.setBalanceUpdatedAt(now);
                 return accountRepo.save(account);
-            })
-            .await().indefinitely();
+            });
     }
 }

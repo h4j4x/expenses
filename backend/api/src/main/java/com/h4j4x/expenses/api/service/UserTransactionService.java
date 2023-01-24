@@ -40,9 +40,9 @@ public class UserTransactionService {
             .onItem().invoke(savedTransaction -> eventEmitter.send(account.getId().toString()));
     }
 
-    public Multi<UserTransaction> findTransactions(UserAccount account,
-                                                   OffsetDateTime from,
-                                                   TransactionStatus status) {
-        return transactionRepo.findTransactions(account, from, status);
+    public Multi<UserTransaction> findTransactionsFromDateWithStatus(UserAccount account,
+                                                                     OffsetDateTime from,
+                                                                     TransactionStatus status) {
+        return transactionRepo.findTransactionsFromDateWithStatus(account, from, status);
     }
 }

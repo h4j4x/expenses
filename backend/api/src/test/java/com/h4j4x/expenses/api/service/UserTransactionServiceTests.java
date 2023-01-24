@@ -84,17 +84,17 @@ public class UserTransactionServiceTests {
             items.add(item);
         }
         Mockito
-            .when(transactionRepo.findTransactions(account, from, status))
+            .when(transactionRepo.findTransactionsFromDateWithStatus(account, from, status))
             .thenReturn(Multi.createFrom()
                 .items(items.toArray(new UserTransaction[0])));
 
-        var multi = transactionService.findTransactions(account, from, status);
+        var multi = transactionService.findTransactionsFromDateWithStatus(account, from, status);
         multi.subscribe()
             .withSubscriber(AssertSubscriber.create(itemsCount))
             .awaitCompletion()
             .assertItems(items.toArray(new UserTransaction[0]));
 
-        Mockito.verify(transactionRepo).findTransactions(account, from, status);
+        Mockito.verify(transactionRepo).findTransactionsFromDateWithStatus(account, from, status);
         Mockito.verifyNoMoreInteractions(transactionRepo);
     }
 }

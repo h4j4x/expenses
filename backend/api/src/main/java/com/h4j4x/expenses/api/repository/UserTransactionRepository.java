@@ -21,9 +21,9 @@ public class UserTransactionRepository extends BaseRepository<UserTransaction> {
         return super.save(transaction, validator);
     }
 
-    public Multi<UserTransaction> findTransactions(UserAccount account,
-                                                   OffsetDateTime from,
-                                                   TransactionStatus status) {
+    public Multi<UserTransaction> findTransactionsFromDateWithStatus(UserAccount account,
+                                                                     OffsetDateTime from,
+                                                                     TransactionStatus status) {
         return find("account_id = ?1 and createdAt >= ?2 and status = ?3", account.getId(), from, status)
             .stream();
     }

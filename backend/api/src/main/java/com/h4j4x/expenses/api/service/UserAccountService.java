@@ -9,6 +9,7 @@ import com.h4j4x.expenses.common.util.NumberUtils;
 import com.h4j4x.expenses.common.util.ObjectUtils;
 import com.h4j4x.expenses.common.util.StringUtils;
 import io.smallrye.mutiny.Uni;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -118,7 +119,7 @@ public class UserAccountService {
         Uni.createFrom().item(NumberUtils.parseLong(accountId))
             .onItem().ifNotNull().transformToUni(id -> accountRepo.findById(id))
             .onItem().ifNotNull().transformToUni(this::updateAccountBalance)
-            .await().indefinitely();
+            .await().atMost(Duration.ofMinutes(5)); // todo: config
     }
 
     public Uni<UserAccount> updateAccountBalance(UserAccount account) {
